@@ -1,0 +1,33 @@
+{
+  "name": "aleatory",
+  "version": "0.1.0",
+  "description": "Statistical computing library for JavaScript - R-like functionality for the web",
+  "main": "src/index.js",
+  "type": "module",
+  "scripts": {
+    "test": "node --test tests/**/*.test.js",
+    "build": "echo 'Build step placeholder'",
+    "dev": "node examples/demo.js"
+  },
+  "keywords": [
+    "statistics",
+    "data-science",
+    "r",
+    "regression",
+    "linear-models",
+    "glm",
+    "distributions",
+    "t-test",
+    "anova",
+    "data-analysis"
+  ],
+  "author": "Marco Birkedahl Jørgensen",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/MarcoJ03rgensen/aleatory"
+  },
+  "engines": {
+    "node": ">=16.0.0"
+  }
+}
