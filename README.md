@@ -1,120 +1,151 @@
-# Aleatory
+# 🎲 Aleatory
 
-**Statistical Computing for JavaScript**
+**Statistical computing library for JavaScript** – R-like functionality for the web
 
-Aleatory is a comprehensive JavaScript library that brings R-style statistical computing to the web. It eliminates the need for Python or R backends in data applications by providing native JavaScript implementations of essential statistical methods.
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![Node.js](https://img.shields.io/badge/node-%3E%3D16.0.0-brightgreen)](https://nodejs.org/)
 
-## Vision
+---
 
-This library aims to be a foundational piece of software for web-based data science, enabling:
+## 📦 Current Status: Phase 1 Kernel
 
-- **Privacy**: Analyze sensitive data locally without server uploads
-- **Cost**: Eliminate backend infrastructure for statistical computing
-- **Familiarity**: R-like syntax for statisticians and data scientists
-- **Performance**: TypedArray-based vectors for efficient computation
+Aleatory is in active early development. Current implementation includes:
 
-## Architecture
+### ✅ Implemented
 
-Aleatory is built on four core layers:
+**Core Objects**
+- `Vector` – numeric vectors with NA support
+- `Factor` – categorical data with levels
 
-### 1. Vector Core
-- Custom `Vector` class backed by `Float64Array`
-- Native support for missing values (NA) via bitmasks
-- Efficient memory layout for large datasets
+**Base Functions**
+- `summary()` – R-style summaries for Vector and Factor
+- Statistical helpers: `mean()`, `sd()`, `var()`, `min()`, `max()`, `na_omit()`
 
-### 2. Formula Parser
-- Parses R-style formula strings: `y ~ x + age + interaction`
-- Automatically converts categorical variables to dummy codes
-- Generates design matrices for modeling
+**Distribution Functions**
+- Normal distribution: `dnorm()`, `pnorm()`, `qnorm()`, `rnorm()`
+- Full R-compatible interface with `mean`, `sd`, `lower_tail`, `log_p` parameters
 
-### 3. Math Kernel
-- Linear algebra operations (matrix multiplication, inversion)
-- Matrix decomposition (QR, SVD, Cholesky)
-- Optimized for statistical computing workloads
+**Statistical Tests**
+- `t_test()` – Student's t-test (one-sample, two-sample, paired)
+- Welch's t-test for unequal variances
+- ⚠️ Currently uses normal approximation for p-values (t-distribution coming soon)
 
-### 4. API Layer
-- R-compatible functions: `lm()`, `glm()`, `t.test()`, `anova()`
-- Statistical distributions (PDF, CDF, quantile functions)
-- Summary and diagnostic outputs
+---
 
-## Development Roadmap
+## 🚀 Installation & Usage
 
-### Phase 1: The "Student" Release (Months 1-3)
-**Goal**: Replace R for basic university statistics courses
-
-- ✅ Vector data structure with NA support
-- Statistical distributions (Normal, T, Chi-Square, F, Binomial)
-- T-tests (one-sample, two-sample, paired)
-- Summary statistics and formatting
-
-### Phase 2: The "Modeler" Release (Months 4-6)
-**Goal**: Enable linear regression and ANOVA
-
-- Formula parser (`y ~ x` syntax)
-- Linear models: `lm()`
-- Matrix operations and QR decomposition
-- ANOVA tables and correlation matrices
-- Residual analysis
-
-### Phase 3: The "Data Scientist" Release (Months 7-9)
-**Goal**: Complex datasets and generalized linear models
-
-- DataFrame object with joins and filtering
-- Generalized Linear Models: `glm()`
-- Logistic and Poisson regression
-- Missing data imputation
-
-### Phase 4: The "Visual" Release (Months 10+)
-**Goal**: Automatic diagnostic plots
-
-- Residuals vs Fitted plots
-- Q-Q plots for normality assessment
-- Cook's Distance for outlier detection
-- Automatic plot generation: `plot(model)`
-
-## Example Usage (Planned)
-
-```javascript
-import { lm, Vector, DataFrame } from 'aleatory';
-
-// Create data
-const data = [
-  { sales: 10, region: "North", temperature: 15 },
-  { sales: 20, region: "South", temperature: 25 },
-  { sales: 15, region: "North", temperature: 18 }
-];
-
-// R-style formula interface - automatic categorical handling
-const model = lm('sales ~ region + temperature', { data });
-
-console.log(model.summary());
-// Automatically converts 'region' to dummy variables
-// Outputs R-style summary with coefficients, p-values, R²
+```bash
+git clone https://github.com/MarcoJ03rgensen/aleatory
+cd aleatory
+npm install  # (no dependencies yet)
 ```
 
-## Why Aleatory?
+### Run the Demo
 
-The name "Aleatory" comes from the Latin *aleatorius* ("depending on chance"), reflecting the library's focus on probability and statistical inference. It sounds sophisticated and captures the essence of uncertainty in data analysis.
+```bash
+npm run dev
+```
 
-## Current Status
+### Run Tests
 
-**Phase 1 - In Development**
+```bash
+npm test
+```
 
-The core `Vector` class is implemented with:
-- TypedArray foundation (Float64Array)
-- NA/missing value support via bitmasks
-- Basic statistical methods (mean, variance, sd, min, max)
-- Vector arithmetic operations
-- NA removal (`naOmit()`)
+Golden-fixture tests validate against reference values from **R 4.3.0**.
 
-## Contributing
+---
 
-This is an ambitious project that aims to democratize statistical computing on the web. Contributions are welcome!
+## 📖 Quick Examples
 
-## License
+```javascript
+import aleatory from 'aleatory';
+const { Vector, dnorm, pnorm, qnorm, rnorm, t_test } = aleatory;
 
-MIT
+// Normal distribution
+dnorm(0);                        // 0.3989 (density at x=0)
+pnorm(1.96);                     // 0.975 (P(Z ≤ 1.96))
+qnorm(0.975);                    // 1.96 (97.5th percentile)
+const samples = rnorm(100, { mean: 10, sd: 2 });
 
-## Inspiration
+// t-test
+const x = [10, 12, 13, 11, 15];
+const result = t_test(x, null, { mu: 10 });
+console.log(result);
+// {
+//   statistic: { t: 2.738 },
+//   parameter: { df: 4 },
+//   p_value: 0.052,
+//   estimate: { mean: 12.2 },
+//   conf_int: [9.23, 15.17],
+//   ...
+// }
 
-Inspired by R's statistical computing ecosystem and the need for privacy-preserving, client-side data analysis tools.
+// Two-sample test
+const y = [8, 9, 10, 11, 12];
+const result2 = t_test(x, y);  // Welch's t-test
+```
+
+---
+
+## 🧪 Testing Philosophy
+
+**Golden-fixture approach**: All statistical functions are validated against known-good values from R.
+
+- `tests/distributions/normal.test.js` – Normal distribution functions
+- `tests/stats/t_test.test.js` – t-test implementations
+
+Tolerance: `1e-6` for most computations, `1e-4` for tests using normal approximation placeholders.
+
+---
+
+## 🗺️ Roadmap
+
+### Phase 2: Core Distributions
+- [ ] t-distribution (`dt`, `pt`, `qt`, `rt`)
+- [ ] Chi-squared distribution
+- [ ] F-distribution
+- [ ] Binomial, Poisson
+- [ ] Replace normal approximations in `t_test()` with proper t-quantiles
+
+### Phase 3: Linear Models
+- [ ] `lm()` – linear regression
+- [ ] `glm()` – generalized linear models
+- [ ] `anova()` – analysis of variance
+
+### Phase 4: Data Manipulation
+- [ ] DataFrame object
+- [ ] tidyverse-style operations (filter, mutate, group_by)
+
+### Beyond
+- [ ] Time series analysis
+- [ ] Bayesian methods
+- [ ] Machine learning utilities
+
+---
+
+## 🤝 Contributing
+
+This project is in early development. Contributions welcome!
+
+1. Fork the repo
+2. Create a feature branch
+3. Add tests (golden-fixture preferred)
+4. Submit a PR
+
+---
+
+## 📄 License
+
+MIT License – see [LICENSE](LICENSE) for details.
+
+---
+
+## 🔗 Links
+
+- **Repository**: [github.com/MarcoJ03rgensen/aleatory](https://github.com/MarcoJ03rgensen/aleatory)
+- **Author**: Marco Birkedahl Jørgensen
+
+---
+
+*Named after the Latin "aleatorius" (relating to chance/dice) – because statistics is fundamentally about reasoning under uncertainty.* 🎲

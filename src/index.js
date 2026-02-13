@@ -3,8 +3,16 @@
 import Vector from './core/Vector.js';
 import Factor from './core/Factor.js';
 import { summary } from './base/summary.js';
+import { dnorm, pnorm, qnorm, rnorm } from './distributions/normal.js';
+import { t_test } from './stats/t_test.js';
 
 export { Vector, Factor, summary };
+
+// Distribution functions
+export { dnorm, pnorm, qnorm, rnorm };
+
+// Statistical tests
+export { t_test };
 
 // Base-R-ish convenience constructors
 export function c(x) {
@@ -44,7 +52,7 @@ export function na_omit(x) {
   return c(x).naOmit();
 }
 
-// Optional default export for “namespace style” usage
+// Optional default export for "namespace style" usage
 export default {
   Vector,
   Factor,
@@ -58,4 +66,11 @@ export default {
   min,
   max,
   na_omit,
+  // Distributions
+  dnorm,
+  pnorm,
+  qnorm,
+  rnorm,
+  // Tests
+  t_test,
 };
