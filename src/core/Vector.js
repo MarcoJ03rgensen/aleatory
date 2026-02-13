@@ -14,7 +14,7 @@ class Vector {
    */
   constructor(data, type = 'numeric') {
     this.type = type;
-    
+
     if (typeof data === 'number') {
       // Create empty vector of specified length
       this.length = data;
@@ -25,7 +25,7 @@ class Vector {
       this.length = data.length;
       this.data = new Float64Array(this.length);
       this.na_mask = new Uint8Array(this.length);
-      
+
       for (let i = 0; i < this.length; i++) {
         const val = data[i];
         if (val === null || val === undefined || Number.isNaN(val)) {
@@ -56,7 +56,7 @@ class Vector {
     if (i < 0 || i >= this.length) {
       throw new Error(`Index ${i} out of bounds [0, ${this.length})`);
     }
-    
+
     if (value === null || value === undefined || Number.isNaN(value)) {
       this.na_mask[i] = 1;
       this.data[i] = 0;
@@ -113,7 +113,7 @@ class Vector {
   mean(na_rm = true) {
     let sum = 0;
     let count = 0;
-    
+
     for (let i = 0; i < this.length; i++) {
       if (this.na_mask[i] === 0) {
         sum += this.data[i];
@@ -122,7 +122,7 @@ class Vector {
         return null; // Return NA if any NA present and na_rm=false
       }
     }
-    
+
     return count > 0 ? sum / count : null;
   }
 
@@ -131,7 +131,7 @@ class Vector {
    */
   sum(na_rm = true) {
     let sum = 0;
-    
+
     for (let i = 0; i < this.length; i++) {
       if (this.na_mask[i] === 0) {
         sum += this.data[i];
@@ -139,7 +139,7 @@ class Vector {
         return null;
       }
     }
-    
+
     return sum;
   }
 
@@ -149,10 +149,10 @@ class Vector {
   variance(na_rm = true) {
     const m = this.mean(na_rm);
     if (m === null) return null;
-    
+
     let sumSq = 0;
     let count = 0;
-    
+
     for (let i = 0; i < this.length; i++) {
       if (this.na_mask[i] === 0) {
         const diff = this.data[i] - m;
@@ -160,7 +160,7 @@ class Vector {
         count++;
       }
     }
-    
+
     return count > 1 ? sumSq / (count - 1) : null;
   }
 
@@ -178,7 +178,7 @@ class Vector {
   min(na_rm = true) {
     let min = Infinity;
     let hasValue = false;
-    
+
     for (let i = 0; i < this.length; i++) {
       if (this.na_mask[i] === 0) {
         if (this.data[i] < min) min = this.data[i];
@@ -187,7 +187,7 @@ class Vector {
         return null;
       }
     }
-    
+
     return hasValue ? min : null;
   }
 
@@ -197,7 +197,7 @@ class Vector {
   max(na_rm = true) {
     let max = -Infinity;
     let hasValue = false;
-    
+
     for (let i = 0; i < this.length; i++) {
       if (this.na_mask[i] === 0) {
         if (this.data[i] > max) max = this.data[i];
@@ -206,7 +206,7 @@ class Vector {
         return null;
       }
     }
-    
+
     return hasValue ? max : null;
   }
 
@@ -217,7 +217,7 @@ class Vector {
     const validCount = this.countValid();
     const result = new Vector(validCount, this.type);
     let idx = 0;
-    
+
     for (let i = 0; i < this.length; i++) {
       if (this.na_mask[i] === 0) {
         result.data[idx] = this.data[i];
@@ -225,7 +225,7 @@ class Vector {
         idx++;
       }
     }
-    
+
     return result;
   }
 
@@ -246,6 +246,9 @@ class Vector {
       return result;
     } else if (other instanceof Vector) {
       // Vector addition
+      if (other.length !== this.length) {
+        throw new Error('Vector length mismatch');
+      }
       const result = new Vector(this.length);
       for (let i = 0; i < this.length; i++) {
         if (this.na_mask[i] === 1 || other.na_mask[i] === 1) {
@@ -272,6 +275,9 @@ class Vector {
       }
       return result;
     } else if (other instanceof Vector) {
+      if (other.length !== this.length) {
+        throw new Error('Vector length mismatch');
+      }
       const result = new Vector(this.length);
       for (let i = 0; i < this.length; i++) {
         if (this.na_mask[i] === 1 || other.na_mask[i] === 1) {
@@ -298,4 +304,4 @@ class Vector {
   }
 }
 
-module.exports = Vector;
+export default Vector;
