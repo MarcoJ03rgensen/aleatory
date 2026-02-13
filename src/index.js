@@ -4,12 +4,16 @@ import Vector from './core/Vector.js';
 import Factor from './core/Factor.js';
 import { summary } from './base/summary.js';
 import { dnorm, pnorm, qnorm, rnorm } from './distributions/normal.js';
+import { dt, pt, qt, rt } from './distributions/t.js';
+import { dchisq, pchisq, qchisq, rchisq } from './distributions/chisq.js';
 import { t_test } from './stats/t_test.js';
 
 export { Vector, Factor, summary };
 
 // Distribution functions
 export { dnorm, pnorm, qnorm, rnorm };
+export { dt, pt, qt, rt };
+export { dchisq, pchisq, qchisq, rchisq };
 
 // Statistical tests
 export { t_test };
@@ -71,6 +75,14 @@ export default {
   pnorm,
   qnorm,
   rnorm,
+  dt,
+  pt,
+  qt,
+  rt,
+  dchisq,
+  pchisq,
+  qchisq,
+  rchisq,
   // Tests
   t_test,
 };

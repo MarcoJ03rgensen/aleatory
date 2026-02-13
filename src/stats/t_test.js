@@ -1,6 +1,6 @@
 // Student's t-test implementation
 import Vector from '../core/Vector.js';
-import { pnorm } from '../distributions/normal.js';
+import { pt, qt } from '../distributions/t.js';
 
 /**
  * Student's t-test
@@ -58,11 +58,10 @@ function oneSampleT(x, mu, alternative, conf_level) {
   const t_stat = (mean - mu) / se;
   const df = n - 1;
   
-  // P-value calculation (using normal approximation for now - placeholder)
-  // TODO: Implement proper t-distribution functions (pt, qt)
+  // P-value using proper t-distribution
   const p_value = calculatePValue(t_stat, df, alternative);
   
-  // Confidence interval
+  // Confidence interval using t-quantiles
   const { lower, upper } = calculateCI(mean, se, df, conf_level, alternative);
   
   return {
@@ -126,53 +125,47 @@ function twoSampleT(x, y, mu, alternative, var_equal, conf_level) {
 }
 
 /**
- * Calculate p-value from t-statistic
- * PLACEHOLDER: Uses normal approximation (not accurate for small df)
- * TODO: Replace with proper pt() function when t-distribution is implemented
+ * Calculate p-value from t-statistic using proper t-distribution
  */
 function calculatePValue(t_stat, df, alternative) {
-  // TEMPORARY: Normal approximation (works reasonably for df > 30)
-  // This is a placeholder until we implement the t-distribution
   const abs_t = Math.abs(t_stat);
-  const p_upper = pnorm(-abs_t, { lower_tail: false });
   
   switch (alternative) {
     case 'two.sided':
-      return 2 * p_upper;
+      // P(|T| >= |t|) = 2 * P(T >= |t|)
+      return 2 * pt(abs_t, df, { lower_tail: false });
     case 'greater':
-      return t_stat > 0 ? p_upper : 1 - p_upper;
+      // P(T >= t)
+      return pt(t_stat, df, { lower_tail: false });
     case 'less':
-      return t_stat < 0 ? p_upper : 1 - p_upper;
+      // P(T <= t)
+      return pt(t_stat, df, { lower_tail: true });
     default:
       throw new Error(`Unknown alternative: ${alternative}`);
   }
 }
 
 /**
- * Calculate confidence interval
- * PLACEHOLDER: Uses normal quantiles
- * TODO: Replace with proper qt() function
+ * Calculate confidence interval using proper t-quantiles
  */
 function calculateCI(estimate, se, df, conf_level, alternative) {
-  // TEMPORARY: Using normal approximation
-  // For df > 30, this is reasonable; for smaller df, we need t-quantiles
-  
   if (alternative === 'two.sided') {
     const alpha = 1 - conf_level;
-    // Using normal critical value (placeholder)
-    const z = 1.96; // ~95% for normal; should be qt(1-alpha/2, df)
+    const t_crit = qt(1 - alpha/2, df);
     return {
-      lower: estimate - z * se,
-      upper: estimate + z * se
+      lower: estimate - t_crit * se,
+      upper: estimate + t_crit * se
     };
   } else if (alternative === 'less') {
+    const t_crit = qt(conf_level, df);
     return {
       lower: -Infinity,
-      upper: estimate + 1.645 * se // placeholder
+      upper: estimate + t_crit * se
     };
   } else { // greater
+    const t_crit = qt(conf_level, df);
     return {
-      lower: estimate - 1.645 * se, // placeholder
+      lower: estimate - t_crit * se,
       upper: Infinity
     };
   }
