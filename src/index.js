@@ -6,6 +6,7 @@ import { summary } from './base/summary.js';
 import { dnorm, pnorm, qnorm, rnorm } from './distributions/normal.js';
 import { dt, pt, qt, rt } from './distributions/t.js';
 import { dchisq, pchisq, qchisq, rchisq } from './distributions/chisq.js';
+import { df, pf, qf, rf } from './distributions/f.js';
 import { t_test } from './stats/t_test.js';
 
 export { Vector, Factor, summary };
@@ -14,6 +15,7 @@ export { Vector, Factor, summary };
 export { dnorm, pnorm, qnorm, rnorm };
 export { dt, pt, qt, rt };
 export { dchisq, pchisq, qchisq, rchisq };
+export { df, pf, qf, rf };
 
 // Statistical tests
 export { t_test };
@@ -83,6 +85,10 @@ export default {
   pchisq,
   qchisq,
   rchisq,
+  df,
+  pf,
+  qf,
+  rf,
   // Tests
   t_test,
 };
