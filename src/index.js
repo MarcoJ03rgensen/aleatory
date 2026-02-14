@@ -10,6 +10,7 @@ import { df, pf, qf, rf } from './distributions/f.js';
 import { dbinom, pbinom, qbinom, rbinom } from './distributions/binomial.js';
 import { dpois, ppois, qpois, rpois } from './distributions/poisson.js';
 import { t_test } from './stats/t_test.js';
+import { lm, predict } from './models/lm.js';
 
 export { Vector, Factor, summary };
 
@@ -23,6 +24,9 @@ export { dpois, ppois, qpois, rpois };
 
 // Statistical tests
 export { t_test };
+
+// Models
+export { lm, predict };
 
 // Base-R-ish convenience constructors
 export function c(x) {
@@ -103,4 +107,7 @@ export default {
   rpois,
   // Tests
   t_test,
+  // Models
+  lm,
+  predict,
 };
