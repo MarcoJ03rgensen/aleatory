@@ -7,9 +7,9 @@
 
 ---
 
-## 📦 Current Status: Phase 1 Kernel
+## 📦 Current Status: Phase 2 Complete! 🎉
 
-Aleatory is in active early development. Current implementation includes:
+Aleatory has completed Phase 2 of development. All core statistical distributions are now implemented!
 
 ### ✅ Implemented
 
@@ -21,14 +21,20 @@ Aleatory is in active early development. Current implementation includes:
 - `summary()` – R-style summaries for Vector and Factor
 - Statistical helpers: `mean()`, `sd()`, `var()`, `min()`, `max()`, `na_omit()`
 
-**Distribution Functions**
-- Normal distribution: `dnorm()`, `pnorm()`, `qnorm()`, `rnorm()`
-- Full R-compatible interface with `mean`, `sd`, `lower_tail`, `log_p` parameters
+**Distribution Functions** (All with d/p/q/r interface)
+- **Normal distribution**: `dnorm()`, `pnorm()`, `qnorm()`, `rnorm()`
+- **Student's t-distribution**: `dt()`, `pt()`, `qt()`, `rt()`
+- **Chi-squared distribution**: `dchisq()`, `pchisq()`, `qchisq()`, `rchisq()`
+- **F-distribution**: `df()`, `pf()`, `qf()`, `rf()`
+- **Binomial distribution**: `dbinom()`, `pbinom()`, `qbinom()`, `rbinom()`
+- **Poisson distribution**: `dpois()`, `ppois()`, `qpois()`, `rpois()`
+
+All distributions follow R's standard interface with `lower_tail`, `log`, and `log_p` parameters.
 
 **Statistical Tests**
 - `t_test()` – Student's t-test (one-sample, two-sample, paired)
 - Welch's t-test for unequal variances
-- ⚠️ Currently uses normal approximation for p-values (t-distribution coming soon)
+- ✅ Now uses proper t-distribution (no approximations!)
 
 ---
 
@@ -60,13 +66,28 @@ Golden-fixture tests validate against reference values from **R 4.3.0**.
 
 ```javascript
 import aleatory from 'aleatory';
-const { Vector, dnorm, pnorm, qnorm, rnorm, t_test } = aleatory;
+const { Vector, dnorm, pnorm, qnorm, rnorm, t_test, dbinom, dpois } = aleatory;
 
 // Normal distribution
 dnorm(0);                        // 0.3989 (density at x=0)
 pnorm(1.96);                     // 0.975 (P(Z ≤ 1.96))
 qnorm(0.975);                    // 1.96 (97.5th percentile)
 const samples = rnorm(100, { mean: 10, sd: 2 });
+
+// Binomial distribution
+dbinom(3, 10, 0.5);              // P(X = 3) for n=10, p=0.5
+pbinom(5, 10, 0.5);              // P(X ≤ 5)
+const coin_flips = rbinom(100, 10, 0.5);
+
+// Poisson distribution
+dpois(5, 3.5);                   // P(X = 5) for λ=3.5
+ppois(7, 3.5);                   // P(X ≤ 7)
+const events = rpois(100, 3.5);
+
+// F-distribution (for ANOVA)
+df(2.5, 5, 10);                  // F density
+pf(2.5, 5, 10);                  // P(F ≤ 2.5)
+qf(0.95, 5, 10);                 // 95th percentile
 
 // t-test
 const x = [10, 12, 13, 11, 15];
@@ -92,32 +113,44 @@ const result2 = t_test(x, y);  // Welch's t-test
 
 **Golden-fixture approach**: All statistical functions are validated against known-good values from R.
 
-- `tests/distributions/normal.test.js` – Normal distribution functions
+- `tests/distributions/*.test.js` – All distribution functions
 - `tests/stats/t_test.test.js` – t-test implementations
 
-Tolerance: `1e-6` for most computations, `1e-4` for tests using normal approximation placeholders.
+Tolerance: `1e-6` for most computations.
 
 ---
 
 ## 🗺️ Roadmap
 
-### Phase 2: Core Distributions
-- [ ] t-distribution (`dt`, `pt`, `qt`, `rt`)
-- [ ] Chi-squared distribution
-- [ ] F-distribution
-- [ ] Binomial, Poisson
-- [ ] Replace normal approximations in `t_test()` with proper t-quantiles
+### ✅ Phase 2: Core Distributions (COMPLETE)
+- [x] t-distribution (`dt`, `pt`, `qt`, `rt`)
+- [x] Chi-squared distribution
+- [x] F-distribution
+- [x] Binomial, Poisson
+- [x] Replace normal approximations in `t_test()` with proper t-quantiles
 
 ### Phase 3: Linear Models
 - [ ] `lm()` – linear regression
 - [ ] `glm()` – generalized linear models
 - [ ] `anova()` – analysis of variance
+- [ ] Model diagnostics and summaries
 
 ### Phase 4: Data Manipulation
 - [ ] DataFrame object
 - [ ] tidyverse-style operations (filter, mutate, group_by)
+- [ ] Data reshaping (pivot, melt)
+
+### Phase 5: Additional Distributions
+- [ ] Exponential distribution
+- [ ] Gamma distribution
+- [ ] Beta distribution
+- [ ] Uniform distribution
+- [ ] Geometric distribution
+- [ ] Negative binomial
 
 ### Beyond
+- [ ] Non-parametric tests (Mann-Whitney, Wilcoxon, Kruskal-Wallis)
+- [ ] Correlation and regression tests
 - [ ] Time series analysis
 - [ ] Bayesian methods
 - [ ] Machine learning utilities
@@ -126,7 +159,7 @@ Tolerance: `1e-6` for most computations, `1e-4` for tests using normal approxima
 
 ## 🤝 Contributing
 
-This project is in early development. Contributions welcome!
+This project is in active development. Contributions welcome!
 
 1. Fork the repo
 2. Create a feature branch
