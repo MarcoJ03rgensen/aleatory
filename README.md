@@ -7,9 +7,9 @@
 
 ---
 
-## 📦 Current Status: Phase 2 Complete! 🎉
+## 📦 Current Status: Phase 3 In Progress! 🚀
 
-Aleatory has completed Phase 2 of development. All core statistical distributions are now implemented!
+Aleatory has completed Phase 2 and is now implementing Phase 3: Linear Models!
 
 ### ✅ Implemented
 
@@ -34,7 +34,14 @@ All distributions follow R's standard interface with `lower_tail`, `log`, and `l
 **Statistical Tests**
 - `t_test()` – Student's t-test (one-sample, two-sample, paired)
 - Welch's t-test for unequal variances
-- ✅ Now uses proper t-distribution (no approximations!)
+
+**Linear Models** ✨ NEW!
+- `lm()` – linear regression using QR decomposition
+- `predict()` – predictions from fitted models
+- Simple and multiple regression
+- Models with/without intercept
+- Full diagnostic statistics (R², F-test, t-tests, standard errors)
+- Residual analysis
 
 ---
 
@@ -62,7 +69,9 @@ Golden-fixture tests validate against reference values from **R 4.3.0**.
 
 ---
 
-## 📖 Quick Examples
+## 📚 Quick Examples
+
+### Distribution Functions
 
 ```javascript
 import aleatory from 'aleatory';
@@ -83,12 +92,11 @@ const coin_flips = rbinom(100, 10, 0.5);
 dpois(5, 3.5);                   // P(X = 5) for λ=3.5
 ppois(7, 3.5);                   // P(X ≤ 7)
 const events = rpois(100, 3.5);
+```
 
-// F-distribution (for ANOVA)
-df(2.5, 5, 10);                  // F density
-pf(2.5, 5, 10);                  // P(F ≤ 2.5)
-qf(0.95, 5, 10);                 // 95th percentile
+### Statistical Tests
 
+```javascript
 // t-test
 const x = [10, 12, 13, 11, 15];
 const result = t_test(x, null, { mu: 10 });
@@ -107,6 +115,36 @@ const y = [8, 9, 10, 11, 12];
 const result2 = t_test(x, y);  // Welch's t-test
 ```
 
+### Linear Regression
+
+```javascript
+import { lm, predict } from 'aleatory';
+
+// Simple linear regression
+const x = [1, 2, 3, 4, 5];
+const y = [2.1, 3.9, 6.2, 7.8, 10.1];
+const fit = lm(y, [x]);
+
+console.log(fit.coefficients);      // [intercept, slope]
+console.log(fit.r_squared);         // R²
+console.log(fit.p_values);          // p-values for coefficients
+console.log(fit.fitted_values);     // fitted values
+console.log(fit.residuals);         // residuals
+
+// Multiple regression
+const x1 = [1, 2, 3, 4, 5];
+const x2 = [2, 3, 4, 5, 6];
+const y2 = [10, 12, 15, 18, 20];
+const fit2 = lm(y2, [x1, x2]);
+
+// Predictions
+const x_new = [6, 7, 8];
+const predictions = predict(fit, [x_new]);
+
+// Model through origin (no intercept)
+const fit3 = lm(y, [x], { intercept: false });
+```
+
 ---
 
 ## 🧪 Testing Philosophy
@@ -115,6 +153,7 @@ const result2 = t_test(x, y);  // Welch's t-test
 
 - `tests/distributions/*.test.js` – All distribution functions
 - `tests/stats/t_test.test.js` – t-test implementations
+- `tests/models/lm.test.js` – Linear regression
 
 Tolerance: `1e-6` for most computations.
 
@@ -129,11 +168,13 @@ Tolerance: `1e-6` for most computations.
 - [x] Binomial, Poisson
 - [x] Replace normal approximations in `t_test()` with proper t-quantiles
 
-### Phase 3: Linear Models
-- [ ] `lm()` – linear regression
-- [ ] `glm()` – generalized linear models
+### Phase 3: Linear Models (IN PROGRESS)
+- [x] `lm()` – linear regression using QR decomposition
+- [x] `predict()` – predictions from fitted models
 - [ ] `anova()` – analysis of variance
+- [ ] `glm()` – generalized linear models
 - [ ] Model diagnostics and summaries
+- [ ] Confidence/prediction intervals
 
 ### Phase 4: Data Manipulation
 - [ ] DataFrame object
