@@ -7,6 +7,8 @@ import { dnorm, pnorm, qnorm, rnorm } from './distributions/normal.js';
 import { dt, pt, qt, rt } from './distributions/t.js';
 import { dchisq, pchisq, qchisq, rchisq } from './distributions/chisq.js';
 import { df, pf, qf, rf } from './distributions/f.js';
+import { dbinom, pbinom, qbinom, rbinom } from './distributions/binomial.js';
+import { dpois, ppois, qpois, rpois } from './distributions/poisson.js';
 import { t_test } from './stats/t_test.js';
 
 export { Vector, Factor, summary };
@@ -16,6 +18,8 @@ export { dnorm, pnorm, qnorm, rnorm };
 export { dt, pt, qt, rt };
 export { dchisq, pchisq, qchisq, rchisq };
 export { df, pf, qf, rf };
+export { dbinom, pbinom, qbinom, rbinom };
+export { dpois, ppois, qpois, rpois };
 
 // Statistical tests
 export { t_test };
@@ -89,6 +93,14 @@ export default {
   pf,
   qf,
   rf,
+  dbinom,
+  pbinom,
+  qbinom,
+  rbinom,
+  dpois,
+  ppois,
+  qpois,
+  rpois,
   // Tests
   t_test,
 };
