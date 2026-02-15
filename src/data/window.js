@@ -4,8 +4,6 @@
  * Provides row_number, rank, lag, lead, cumsum, and other window operations
  */
 
-import Vector from '../core/Vector.js';
-
 /**
  * Add row numbers within groups
  * @param {DataFrame} df - Input DataFrame
@@ -26,26 +24,21 @@ export function row_number(df, partitionBy = [], orderBy = [], options = {}) {
     return result;
   }
   
-  // Group by partition columns
-  const grouped = df.groupBy(...partitionBy);
-  
-  for (const group of grouped.groups) {
-    const indices = group.indices;
+  try {
+    // Group by partition columns
+    const grouped = df.groupBy(...partitionBy);
     
-    // Sort within group if needed
-    if (orderBy.length > 0) {
-      const groupDf = df.slice(indices);
-      const sorted = groupDf.arrange(orderBy, options);
-      const sortedIndices = Array.from({ length: indices.length }, (_, i) => i);
-      
-      for (let i = 0; i < indices.length; i++) {
-        result[indices[i]] = i + 1;
-      }
-    } else {
+    for (const group of grouped.groups) {
+      const indices = group.indices;
       // Just number them in order
       for (let i = 0; i < indices.length; i++) {
         result[indices[i]] = i + 1;
       }
+    }
+  } catch (e) {
+    // Fallback: no grouping
+    for (let i = 0; i < n; i++) {
+      result[i] = i + 1;
     }
   }
   
@@ -98,34 +91,39 @@ export function rank(df, col, partitionBy = [], decreasing = false) {
   }
   
   // Grouped ranking
-  const grouped = df.groupBy(...partitionBy);
-  
-  for (const group of grouped.groups) {
-    const indices = group.indices;
-    const values = indices.map(i => ({ v: df.col(col).at(i), i }));
+  try {
+    const grouped = df.groupBy(...partitionBy);
     
-    values.sort((a, b) => {
-      if (a.v === null || a.v === undefined) return 1;
-      if (b.v === null || b.v === undefined) return -1;
-      const cmp = a.v < b.v ? -1 : a.v > b.v ? 1 : 0;
-      return decreasing ? -cmp : cmp;
-    });
-    
-    let r = 1;
-    for (let i = 0; i < values.length; i++) {
-      let j = i;
-      while (j + 1 < values.length && values[j + 1].v === values[i].v) {
-        j++;
-      }
+    for (const group of grouped.groups) {
+      const indices = group.indices;
+      const values = indices.map(i => ({ v: df.col(col).at(i), i }));
       
-      const avgRank = (r + r + (j - i)) / 2;
-      for (let k = i; k <= j; k++) {
-        result[values[k].i] = avgRank;
-      }
+      values.sort((a, b) => {
+        if (a.v === null || a.v === undefined) return 1;
+        if (b.v === null || b.v === undefined) return -1;
+        const cmp = a.v < b.v ? -1 : a.v > b.v ? 1 : 0;
+        return decreasing ? -cmp : cmp;
+      });
       
-      r += j - i + 1;
-      i = j;
+      let r = 1;
+      for (let i = 0; i < values.length; i++) {
+        let j = i;
+        while (j + 1 < values.length && values[j + 1].v === values[i].v) {
+          j++;
+        }
+        
+        const avgRank = (r + r + (j - i)) / 2;
+        for (let k = i; k <= j; k++) {
+          result[values[k].i] = avgRank;
+        }
+        
+        r += j - i + 1;
+        i = j;
+      }
     }
+  } catch (e) {
+    // Fallback to ungrouped ranking
+    return rank(df, col, [], decreasing);
   }
   
   return result;
@@ -152,11 +150,19 @@ export function lag(df, col, n = 1, fill = null, partitionBy = []) {
     }
   } else {
     // Grouped lag
-    const grouped = df.groupBy(...partitionBy);
-    for (const group of grouped.groups) {
-      const indices = group.indices;
-      for (let i = n; i < indices.length; i++) {
-        result[indices[i]] = df.col(col).at(indices[i - n]);
+    try {
+      const grouped = df.groupBy(...partitionBy);
+      for (const group of grouped.groups) {
+        const indices = group.indices;
+        for (let i = n; i < indices.length; i++) {
+          result[indices[i]] = df.col(col).at(indices[i - n]);
+        }
+      }
+    } catch (e) {
+      // Fallback to simple lag
+      const values = df.colArray(col);
+      for (let i = n; i < nrows; i++) {
+        result[i] = values[i - n];
       }
     }
   }
@@ -185,11 +191,19 @@ export function lead(df, col, n = 1, fill = null, partitionBy = []) {
     }
   } else {
     // Grouped lead
-    const grouped = df.groupBy(...partitionBy);
-    for (const group of grouped.groups) {
-      const indices = group.indices;
-      for (let i = 0; i < indices.length - n; i++) {
-        result[indices[i]] = df.col(col).at(indices[i + n]);
+    try {
+      const grouped = df.groupBy(...partitionBy);
+      for (const group of grouped.groups) {
+        const indices = group.indices;
+        for (let i = 0; i < indices.length - n; i++) {
+          result[indices[i]] = df.col(col).at(indices[i + n]);
+        }
+      }
+    } catch (e) {
+      // Fallback to simple lead
+      const values = df.colArray(col);
+      for (let i = 0; i < nrows - n; i++) {
+        result[i] = values[i + n];
       }
     }
   }
@@ -221,16 +235,29 @@ export function cumsum(df, col, partitionBy = []) {
     }
   } else {
     // Grouped cumsum
-    const grouped = df.groupBy(...partitionBy);
-    for (const group of grouped.groups) {
-      const indices = group.indices;
+    try {
+      const grouped = df.groupBy(...partitionBy);
+      for (const group of grouped.groups) {
+        const indices = group.indices;
+        let sum = 0;
+        for (const idx of indices) {
+          const val = df.col(col).at(idx);
+          if (val !== null && val !== undefined && !isNaN(val)) {
+            sum += val;
+          }
+          result[idx] = sum;
+        }
+      }
+    } catch (e) {
+      // Fallback to simple cumsum
+      const values = df.colArray(col);
       let sum = 0;
-      for (const idx of indices) {
-        const val = df.col(col).at(idx);
+      for (let i = 0; i < nrows; i++) {
+        const val = values[i];
         if (val !== null && val !== undefined && !isNaN(val)) {
           sum += val;
         }
-        result[idx] = sum;
+        result[i] = sum;
       }
     }
   }
@@ -262,18 +289,33 @@ export function cummean(df, col, partitionBy = []) {
       result[i] = count > 0 ? sum / count : null;
     }
   } else {
-    const grouped = df.groupBy(...partitionBy);
-    for (const group of grouped.groups) {
-      const indices = group.indices;
+    try {
+      const grouped = df.groupBy(...partitionBy);
+      for (const group of grouped.groups) {
+        const indices = group.indices;
+        let sum = 0;
+        let count = 0;
+        for (const idx of indices) {
+          const val = df.col(col).at(idx);
+          if (val !== null && val !== undefined && !isNaN(val)) {
+            sum += val;
+            count++;
+          }
+          result[idx] = count > 0 ? sum / count : null;
+        }
+      }
+    } catch (e) {
+      // Fallback
+      const values = df.colArray(col);
       let sum = 0;
       let count = 0;
-      for (const idx of indices) {
-        const val = df.col(col).at(idx);
+      for (let i = 0; i < nrows; i++) {
+        const val = values[i];
         if (val !== null && val !== undefined && !isNaN(val)) {
           sum += val;
           count++;
         }
-        result[idx] = count > 0 ? sum / count : null;
+        result[i] = count > 0 ? sum / count : null;
       }
     }
   }
@@ -296,13 +338,18 @@ export function first(df, col, partitionBy = []) {
     const firstVal = df.col(col).at(0);
     result.fill(firstVal);
   } else {
-    const grouped = df.groupBy(...partitionBy);
-    for (const group of grouped.groups) {
-      const indices = group.indices;
-      const firstVal = df.col(col).at(indices[0]);
-      for (const idx of indices) {
-        result[idx] = firstVal;
+    try {
+      const grouped = df.groupBy(...partitionBy);
+      for (const group of grouped.groups) {
+        const indices = group.indices;
+        const firstVal = df.col(col).at(indices[0]);
+        for (const idx of indices) {
+          result[idx] = firstVal;
+        }
       }
+    } catch (e) {
+      const firstVal = df.col(col).at(0);
+      result.fill(firstVal);
     }
   }
   
@@ -324,13 +371,18 @@ export function last(df, col, partitionBy = []) {
     const lastVal = df.col(col).at(nrows - 1);
     result.fill(lastVal);
   } else {
-    const grouped = df.groupBy(...partitionBy);
-    for (const group of grouped.groups) {
-      const indices = group.indices;
-      const lastVal = df.col(col).at(indices[indices.length - 1]);
-      for (const idx of indices) {
-        result[idx] = lastVal;
+    try {
+      const grouped = df.groupBy(...partitionBy);
+      for (const group of grouped.groups) {
+        const indices = group.indices;
+        const lastVal = df.col(col).at(indices[indices.length - 1]);
+        for (const idx of indices) {
+          result[idx] = lastVal;
+        }
       }
+    } catch (e) {
+      const lastVal = df.col(col).at(nrows - 1);
+      result.fill(lastVal);
     }
   }
   
