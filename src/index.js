@@ -13,6 +13,8 @@ import { t_test } from './stats/t_test.js';
 import { lm, predict } from './models/lm.js';
 import { anova, printAnova } from './models/anova.js';
 import { glm, predictGlm, gaussian, binomial, poisson, Gamma } from './models/glm.js';
+import { diagnostics, confint, predictWithInterval } from './models/diagnostics.js';
+import { summaryLM, summaryGLM, summarizeModel, printSummaryLM, printSummaryGLM, printModelSummary } from './models/summary.js';
 
 export { Vector, Factor, summary };
 
@@ -30,6 +32,10 @@ export { t_test };
 // Models
 export { lm, predict, anova, printAnova };
 export { glm, predictGlm, gaussian, binomial, poisson, Gamma };
+
+// Model diagnostics and summaries
+export { diagnostics, confint, predictWithInterval };
+export { summaryLM, summaryGLM, summarizeModel, printSummaryLM, printSummaryGLM, printModelSummary };
 
 // Base-R-ish convenience constructors
 export function c(x) {
@@ -122,4 +128,14 @@ export default {
   binomial,
   poisson,
   Gamma,
+  // Diagnostics and summaries
+  diagnostics,
+  confint,
+  predictWithInterval,
+  summaryLM,
+  summaryGLM,
+  summarizeModel,
+  printSummaryLM,
+  printSummaryGLM,
+  printModelSummary,
 };
