@@ -15,6 +15,10 @@ import { anova, printAnova } from './models/anova.js';
 import { glm, predictGlm, gaussian, binomial, poisson, Gamma } from './models/glm.js';
 import { diagnostics, confint, predictWithInterval } from './models/diagnostics.js';
 import { summaryLM, summaryGLM, summarizeModel, printSummaryLM, printSummaryGLM, printModelSummary } from './models/summary.js';
+import DataFrame from './data/DataFrame.js';
+import { pivotLonger, pivotWider, separate, unite, dropNA, fillNA } from './data/reshape.js';
+import { innerJoin, leftJoin, rightJoin, fullJoin, antiJoin, semiJoin, bindRows, bindCols } from './data/joins.js';
+import { readCSV, writeCSV, readJSON, writeJSON } from './data/io.js';
 
 export { Vector, Factor, summary };
 
@@ -36,6 +40,12 @@ export { glm, predictGlm, gaussian, binomial, poisson, Gamma };
 // Model diagnostics and summaries
 export { diagnostics, confint, predictWithInterval };
 export { summaryLM, summaryGLM, summarizeModel, printSummaryLM, printSummaryGLM, printModelSummary };
+
+// Data manipulation
+export { DataFrame };
+export { pivotLonger, pivotWider, separate, unite, dropNA, fillNA };
+export { innerJoin, leftJoin, rightJoin, fullJoin, antiJoin, semiJoin, bindRows, bindCols };
+export { readCSV, writeCSV, readJSON, writeJSON };
 
 // Base-R-ish convenience constructors
 export function c(x) {
@@ -138,4 +148,24 @@ export default {
   printSummaryLM,
   printSummaryGLM,
   printModelSummary,
+  // Data manipulation
+  DataFrame,
+  pivotLonger,
+  pivotWider,
+  separate,
+  unite,
+  dropNA,
+  fillNA,
+  innerJoin,
+  leftJoin,
+  rightJoin,
+  fullJoin,
+  antiJoin,
+  semiJoin,
+  bindRows,
+  bindCols,
+  readCSV,
+  writeCSV,
+  readJSON,
+  writeJSON,
 };
