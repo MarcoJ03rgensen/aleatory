@@ -12,6 +12,7 @@ import { dpois, ppois, qpois, rpois } from './distributions/poisson.js';
 import { t_test } from './stats/t_test.js';
 import { lm, predict } from './models/lm.js';
 import { anova, printAnova } from './models/anova.js';
+import { glm, predictGlm, gaussian, binomial, poisson, Gamma } from './models/glm.js';
 
 export { Vector, Factor, summary };
 
@@ -28,6 +29,7 @@ export { t_test };
 
 // Models
 export { lm, predict, anova, printAnova };
+export { glm, predictGlm, gaussian, binomial, poisson, Gamma };
 
 // Base-R-ish convenience constructors
 export function c(x) {
@@ -113,4 +115,11 @@ export default {
   predict,
   anova,
   printAnova,
+  glm,
+  predictGlm,
+  // GLM families
+  gaussian,
+  binomial,
+  poisson,
+  Gamma,
 };
