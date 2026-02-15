@@ -25,8 +25,7 @@ import {
 } from '../src/index.js';
 
 console.log('🎲 Aleatory DataFrame Demo - Phase 4\n');
-console.log('='.
-repeat(50) + '\n');
+console.log('='.repeat(50) + '\n');
 
 // ============================================================================
 // Example 1: Basic DataFrame Operations
