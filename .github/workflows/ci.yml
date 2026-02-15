@@ -23,22 +23,9 @@ jobs:
       uses: actions/setup-node@v4
       with:
         node-version: ${{ matrix.node-version }}
-        cache: 'npm'
-    
-    - name: Install dependencies
-      run: npm ci || npm install
     
     - name: Run tests
       run: npm test
-    
-    - name: Check for test output
-      run: |
-        if [ $? -eq 0 ]; then
-          echo "✅ All tests passed!"
-        else
-          echo "❌ Tests failed!"
-          exit 1
-        fi
 
   lint:
     name: Lint code
@@ -52,14 +39,14 @@ jobs:
       uses: actions/setup-node@v4
       with:
         node-version: '20.x'
-        cache: 'npm'
     
-    - name: Install dependencies
-      run: npm ci || npm install
-    
-    - name: Run linter (if configured)
-      run: npm run lint || echo "No lint script configured"
-      continue-on-error: true
+    - name: Check for lint script
+      run: |
+        if grep -q '"lint"' package.json; then
+          npm run lint
+        else
+          echo "✅ No lint script configured - skipping"
+        fi
 
   coverage:
     name: Code Coverage
@@ -73,11 +60,12 @@ jobs:
       uses: actions/setup-node@v4
       with:
         node-version: '20.x'
-        cache: 'npm'
-    
-    - name: Install dependencies
-      run: npm ci || npm install
     
     - name: Generate coverage
-      run: npm run test:coverage || npm test
-      continue-on-error: true
+      run: |
+        if grep -q '"test:coverage"' package.json; then
+          npm run test:coverage
+        else
+          echo "✅ No coverage script configured - running regular tests"
+          npm test
+        fi
