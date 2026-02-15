@@ -5,8 +5,12 @@
   "main": "src/index.js",
   "type": "module",
   "scripts": {
-    "test": "node --test tests/distributions/*.test.js tests/stats/*.test.js tests/models/*.test.js tests/math/*.test.js tests/data/*.test.js",
-    "test:coverage": "node --test --experimental-test-coverage tests/**/*.test.js",
+    "test": "node --test",
+    "test:data": "node --test tests/data/*.test.js",
+    "test:distributions": "node --test tests/distributions/*.test.js",
+    "test:models": "node --test tests/models/*.test.js",
+    "test:stats": "node --test tests/stats/*.test.js",
+    "test:coverage": "node --test --experimental-test-coverage",
     "build": "echo 'Build step placeholder'",
     "dev": "node examples/demo.js"
   },
