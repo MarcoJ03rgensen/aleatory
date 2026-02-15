@@ -5,7 +5,7 @@
  */
 
 import { describe, it } from 'node:test';
-import assert from 'node:assert';
+import assert from 'node:assert/strict';
 import DataFrame from '../../src/data/DataFrame.js';
 import { row_number, rank, lag, lead, cumsum, cummean, first, last } from '../../src/data/window.js';
 
@@ -17,7 +17,7 @@ describe('Window Functions', () => {
       });
       
       const rn = row_number(df);
-      assert.deepStrictEqual(rn, [1, 2, 3]);
+      assert.deepEqual(rn, [1, 2, 3]);
     });
     
     it('should number rows within groups', () => {
@@ -27,7 +27,7 @@ describe('Window Functions', () => {
       });
       
       const rn = row_number(df, ['group']);
-      assert.deepStrictEqual(rn, [1, 2, 1, 2]);
+      assert.deepEqual(rn, [1, 2, 1, 2]);
     });
   });
   
@@ -38,7 +38,7 @@ describe('Window Functions', () => {
       });
       
       const r = rank(df, 'x');
-      assert.deepStrictEqual(r, [1, 3, 2, 4]);
+      assert.deepEqual(r, [1, 3, 2, 4]);
     });
     
     it('should handle ties with average rank', () => {
@@ -47,7 +47,7 @@ describe('Window Functions', () => {
       });
       
       const r = rank(df, 'x');
-      assert.deepStrictEqual(r, [1, 2.5, 2.5, 4]);
+      assert.deepEqual(r, [1, 2.5, 2.5, 4]);
     });
     
     it('should rank in decreasing order', () => {
@@ -56,7 +56,7 @@ describe('Window Functions', () => {
       });
       
       const r = rank(df, 'x', [], true);
-      assert.deepStrictEqual(r, [4, 2, 3, 1]);
+      assert.deepEqual(r, [4, 2, 3, 1]);
     });
     
     it('should rank within groups', () => {
@@ -66,7 +66,7 @@ describe('Window Functions', () => {
       });
       
       const r = rank(df, 'value', ['group']);
-      assert.deepStrictEqual(r, [1, 2, 1, 2]);
+      assert.deepEqual(r, [1, 2, 1, 2]);
     });
   });
   
@@ -77,7 +77,7 @@ describe('Window Functions', () => {
       });
       
       const lagged = lag(df, 'x');
-      assert.deepStrictEqual(lagged, [null, 10, 20, 30]);
+      assert.deepEqual(lagged, [null, 10, 20, 30]);
     });
     
     it('should lag by n', () => {
@@ -86,7 +86,7 @@ describe('Window Functions', () => {
       });
       
       const lagged = lag(df, 'x', 2);
-      assert.deepStrictEqual(lagged, [null, null, 10, 20, 30]);
+      assert.deepEqual(lagged, [null, null, 10, 20, 30]);
     });
     
     it('should lag with custom fill', () => {
@@ -95,7 +95,7 @@ describe('Window Functions', () => {
       });
       
       const lagged = lag(df, 'x', 1, 0);
-      assert.deepStrictEqual(lagged, [0, 10, 20]);
+      assert.deepEqual(lagged, [0, 10, 20]);
     });
     
     it('should lag within groups', () => {
@@ -105,7 +105,7 @@ describe('Window Functions', () => {
       });
       
       const lagged = lag(df, 'value', 1, null, ['group']);
-      assert.deepStrictEqual(lagged, [null, 10, null, 30]);
+      assert.deepEqual(lagged, [null, 10, null, 30]);
     });
   });
   
@@ -116,7 +116,7 @@ describe('Window Functions', () => {
       });
       
       const led = lead(df, 'x');
-      assert.deepStrictEqual(led, [20, 30, 40, null]);
+      assert.deepEqual(led, [20, 30, 40, null]);
     });
     
     it('should lead by n', () => {
@@ -125,7 +125,7 @@ describe('Window Functions', () => {
       });
       
       const led = lead(df, 'x', 2);
-      assert.deepStrictEqual(led, [30, 40, 50, null, null]);
+      assert.deepEqual(led, [30, 40, 50, null, null]);
     });
     
     it('should lead within groups', () => {
@@ -135,7 +135,7 @@ describe('Window Functions', () => {
       });
       
       const led = lead(df, 'value', 1, null, ['group']);
-      assert.deepStrictEqual(led, [20, null, 40, null]);
+      assert.deepEqual(led, [20, null, 40, null]);
     });
   });
   
@@ -146,7 +146,7 @@ describe('Window Functions', () => {
       });
       
       const cs = cumsum(df, 'x');
-      assert.deepStrictEqual(cs, [1, 3, 6, 10]);
+      assert.deepEqual(cs, [1, 3, 6, 10]);
     });
     
     it('should handle nulls in cumsum', () => {
@@ -155,7 +155,7 @@ describe('Window Functions', () => {
       });
       
       const cs = cumsum(df, 'x');
-      assert.deepStrictEqual(cs, [1, 1, 4, 8]);
+      assert.deepEqual(cs, [1, 1, 4, 8]);
     });
     
     it('should compute cumsum within groups', () => {
@@ -165,7 +165,7 @@ describe('Window Functions', () => {
       });
       
       const cs = cumsum(df, 'value', ['group']);
-      assert.deepStrictEqual(cs, [1, 3, 3, 7]);
+      assert.deepEqual(cs, [1, 3, 3, 7]);
     });
   });
   
@@ -176,7 +176,7 @@ describe('Window Functions', () => {
       });
       
       const cm = cummean(df, 'x');
-      assert.deepStrictEqual(cm, [1, 1.5, 2, 2.5]);
+      assert.deepEqual(cm, [1, 1.5, 2, 2.5]);
     });
     
     it('should compute cummean within groups', () => {
@@ -186,7 +186,7 @@ describe('Window Functions', () => {
       });
       
       const cm = cummean(df, 'value', ['group']);
-      assert.deepStrictEqual(cm, [2, 3, 6, 7]);
+      assert.deepEqual(cm, [2, 3, 6, 7]);
     });
   });
   
@@ -197,7 +197,7 @@ describe('Window Functions', () => {
       });
       
       const f = first(df, 'x');
-      assert.deepStrictEqual(f, [10, 10, 10]);
+      assert.deepEqual(f, [10, 10, 10]);
     });
     
     it('should get last value', () => {
@@ -206,7 +206,7 @@ describe('Window Functions', () => {
       });
       
       const l = last(df, 'x');
-      assert.deepStrictEqual(l, [30, 30, 30]);
+      assert.deepEqual(l, [30, 30, 30]);
     });
     
     it('should get first within groups', () => {
@@ -216,7 +216,7 @@ describe('Window Functions', () => {
       });
       
       const f = first(df, 'value', ['group']);
-      assert.deepStrictEqual(f, [10, 10, 30, 30]);
+      assert.deepEqual(f, [10, 10, 30, 30]);
     });
     
     it('should get last within groups', () => {
@@ -226,7 +226,7 @@ describe('Window Functions', () => {
       });
       
       const l = last(df, 'value', ['group']);
-      assert.deepStrictEqual(l, [20, 20, 40, 40]);
+      assert.deepEqual(l, [20, 20, 40, 40]);
     });
   });
 });
