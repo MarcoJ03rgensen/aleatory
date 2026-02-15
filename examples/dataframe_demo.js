@@ -1,438 +1,281 @@
 /**
- * Comprehensive DataFrame Demo - Phase 4 Complete!
+ * DataFrame Demo - Phase 4 Features
  * 
- * Showcases all data manipulation capabilities:
- * - Creating and manipulating DataFrames
- * - Selection, filtering, and sorting
- * - Transformations with mutate()
+ * Showcases the power of Aleatory's DataFrame with:
+ * - Data manipulation (filter, mutate, arrange)
+ * - Window functions (lag, lead, rank, cumsum)
  * - Grouping and aggregation
- * - Reshaping (pivot, separate, unite)
- * - All join types
- * - I/O operations (CSV, JSON)
- * - Method chaining for fluent workflows
- * 
- * Run with: node examples/dataframe_demo.js
+ * - Method chaining with pipe()
+ * - Integration with statistical models
  */
 
-import {
-  DataFrame,
-  pivotLonger,
-  pivotWider,
-  separate,
-  unite,
-  dropNA,
-  fillNA,
-  innerJoin,
-  leftJoin,
-  bindRows,
-  writeCSV,
-  readCSV
+import { 
+  DataFrame, 
+  chain,
+  pipe,
+  lag,
+  lead,
+  rank,
+  cumsum,
+  cummean,
+  row_number,
+  lm,
+  glm,
+  binomial
 } from '../src/index.js';
 
-console.log('\n' + '='.repeat(80));
-console.log('  DATAFRAME DEMO - TIDYVERSE-STYLE DATA MANIPULATION');
-console.log('='.repeat(80) + '\n');
+console.log('🎲 Aleatory DataFrame Demo - Phase 4\n');
+console.log('='.
+repeat(50) + '\n');
 
 // ============================================================================
-// Example 1: Creating DataFrames
+// Example 1: Basic DataFrame Operations
 // ============================================================================
 
-console.log('-'.repeat(80));
-console.log('Example 1: Creating DataFrames');
-console.log('-'.repeat(80) + '\n');
-
-// From object (most common)
-const df1 = new DataFrame({
-  id: [1, 2, 3, 4, 5],
-  name: ['Alice', 'Bob', 'Charlie', 'Diana', 'Eve'],
-  age: [25, 30, 35, 28, 32],
-  score: [85.5, 92.0, 78.5, 88.0, 95.5]
-});
-
-console.log('Created from object:');
-console.log(df1.toString());
-console.log(`\nDimensions: ${df1.nrow} rows x ${df1.ncol} columns`);
-
-// From array of objects
-const people = [
-  { name: 'Frank', city: 'NYC', salary: 75000 },
-  { name: 'Grace', city: 'LA', salary: 82000 },
-  { name: 'Henry', city: 'SF', salary: 95000 }
-];
-
-const df2 = DataFrame.fromObjects(people);
-
-console.log('\nCreated from array of objects:');
-console.log(df2.toString(5));
-
-// ============================================================================
-// Example 2: Selection and Filtering (tidyverse style)
-// ============================================================================
-
-console.log('\n' + '-'.repeat(80));
-console.log('Example 2: Selection and Filtering');
-console.log('-'.repeat(80) + '\n');
-
-// Select specific columns
-const selected = df1.select('name', 'score');
-console.log('Select name and score columns:');
-console.log(selected.toString(5));
-
-// Filter rows
-const filtered = df1.filter(row => row.age >= 30);
-console.log('\nFilter: age >= 30:');
-console.log(filtered.toString(5));
-
-// Head and tail
-console.log('\nFirst 3 rows:');
-console.log(df1.head(3).toString(5));
-
-// ============================================================================
-// Example 3: Transformations with mutate()
-// ============================================================================
-
-console.log('\n' + '-'.repeat(80));
-console.log('Example 3: Transformations with mutate()');
-console.log('-'.repeat(80) + '\n');
-
-const transformed = df1
-  .mutate({
-    // Computed columns
-    age_category: row => row.age < 30 ? 'Young' : 'Experienced',
-    score_grade: row => {
-      if (row.score >= 90) return 'A';
-      if (row.score >= 80) return 'B';
-      return 'C';
-    },
-    // Constant column
-    year: 2026
-  });
-
-console.log('Added computed columns:');
-console.log(transformed.toString());
-
-// ============================================================================
-// Example 4: Sorting with arrange()
-// ============================================================================
-
-console.log('\n' + '-'.repeat(80));
-console.log('Example 4: Sorting with arrange()');
-console.log('-'.repeat(80) + '\n');
-
-console.log('Sort by score (descending):');
-const sorted = df1.arrange('score', { decreasing: true });
-console.log(sorted.toString(5));
-
-console.log('\nSort by age (ascending), then score (descending):');
-const multiSort = df1.arrange(['age', 'score'], { decreasing: [false, true] });
-console.log(multiSort.toString(5));
-
-// ============================================================================
-// Example 5: Grouping and Aggregation (dplyr style)
-// ============================================================================
-
-console.log('\n' + '-'.repeat(80));
-console.log('Example 5: Grouping and Aggregation');
-console.log('-'.repeat(80) + '\n');
+console.log('📊 Example 1: Basic DataFrame Operations\n');
 
 const sales = new DataFrame({
-  region: ['North', 'North', 'South', 'South', 'East', 'East'],
+  date: ['2024-01', '2024-01', '2024-02', '2024-02', '2024-03', '2024-03'],
   product: ['A', 'B', 'A', 'B', 'A', 'B'],
-  revenue: [1000, 1500, 1200, 1800, 900, 1300],
-  quantity: [10, 15, 12, 18, 9, 13]
+  revenue: [1000, 1500, 1200, 1600, 1100, 1700],
+  units: [50, 60, 55, 65, 52, 68]
 });
 
-console.log('Sales data:');
+console.log('Original data:');
 console.log(sales.toString());
+console.log();
 
-// Group by region
-const byRegion = sales.groupBy('region').summarize({
-  total_revenue: g => g.col('revenue').sum(),
-  total_quantity: g => g.col('quantity').sum(),
-  avg_revenue: g => g.col('revenue').mean(),
-  count: g => g.nrow
-});
-
-console.log('\nGrouped by region:');
-console.log(byRegion.toString());
-
-// Group by multiple columns
-const byRegionProduct = sales.groupBy('region', 'product').summarize({
-  total_revenue: g => g.col('revenue').sum()
-});
-
-console.log('\nGrouped by region AND product:');
-console.log(byRegionProduct.toString());
-
-// ============================================================================
-// Example 6: Method Chaining for Fluent Workflows
-// ============================================================================
-
-console.log('\n' + '-'.repeat(80));
-console.log('Example 6: Method Chaining (the power of fluent API!)');
-console.log('-'.repeat(80) + '\n');
-
-const result = sales
-  .filter(row => row.revenue > 1000)     // Filter high revenue
+// Filter and mutate
+const enriched = sales
+  .filter(row => row.revenue > 1000)
   .mutate({
-    price_per_unit: row => row.revenue / row.quantity  // Add computed column
-  })
-  .arrange('price_per_unit', { decreasing: true })   // Sort by price
-  .select('region', 'product', 'revenue', 'price_per_unit');  // Select columns
-
-console.log('Chained: filter -> mutate -> arrange -> select:');
-console.log(result.toString());
-
-// ============================================================================
-// Example 7: Reshaping - Pivot Operations
-// ============================================================================
-
-console.log('\n' + '-'.repeat(80));
-console.log('Example 7: Reshaping - Pivot Operations');
-console.log('-'.repeat(80) + '\n');
-
-// Wide to long
-const wide = new DataFrame({
-  id: [1, 2, 3],
-  Q1: [10, 15, 12],
-  Q2: [12, 18, 14],
-  Q3: [15, 20, 16],
-  Q4: [18, 22, 19]
-});
-
-console.log('Wide format (quarterly sales):');
-console.log(wide.toString());
-
-const long = pivotLonger(wide, ['Q1', 'Q2', 'Q3', 'Q4'], {
-  names_to: 'quarter',
-  values_to: 'sales'
-});
-
-console.log('\nLong format (pivotLonger):');
-console.log(long.toString(12));
-
-// Long to wide
-const wideAgain = pivotWider(long, {
-  names_from: 'quarter',
-  values_from: 'sales'
-});
-
-console.log('\nBack to wide (pivotWider):');
-console.log(wideAgain.toString());
-
-// ============================================================================
-// Example 8: String Operations - Separate and Unite
-// ============================================================================
-
-console.log('\n' + '-'.repeat(80));
-console.log('Example 8: String Operations');
-console.log('-'.repeat(80) + '\n');
-
-const names = new DataFrame({
-  id: [1, 2, 3],
-  full_name: ['John Doe', 'Jane Smith', 'Bob Johnson']
-});
-
-console.log('Original names:');
-console.log(names.toString());
-
-// Separate into first and last
-const separated = separate(names, 'full_name', ['first', 'last'], { sep: ' ' });
-
-console.log('\nSeparated into first and last:');
-console.log(separated.toString());
-
-// Unite back together
-const united = unite(separated, 'name', ['first', 'last'], { sep: ', ' });
-
-console.log('\nUnited back (Last, First format):');
-console.log(united.toString());
-
-// ============================================================================
-// Example 9: Missing Data Handling
-// ============================================================================
-
-console.log('\n' + '-'.repeat(80));
-console.log('Example 9: Missing Data Handling');
-console.log('-'.repeat(80) + '\n');
-
-const withNA = new DataFrame({
-  id: [1, 2, 3, 4, 5],
-  value: [10, null, 30, null, 50],
-  category: ['A', 'B', null, 'C', 'D']
-});
-
-console.log('Data with missing values:');
-console.log(withNA.toString());
-
-// Drop rows with any NA
-const dropped = dropNA(withNA);
-console.log('\nAfter dropNA():');
-console.log(dropped.toString());
-
-// Fill NA with specific values
-const filled = fillNA(withNA, {
-  value: 0,
-  category: 'Unknown'
-});
-
-console.log('\nAfter fillNA():');
-console.log(filled.toString());
-
-// ============================================================================
-// Example 10: Join Operations (all types!)
-// ============================================================================
-
-console.log('\n' + '-'.repeat(80));
-console.log('Example 10: Join Operations');
-console.log('-'.repeat(80) + '\n');
-
-const employees = new DataFrame({
-  id: [1, 2, 3, 4],
-  name: ['Alice', 'Bob', 'Charlie', 'Diana'],
-  dept_id: [10, 20, 10, 30]
-});
-
-const departments = new DataFrame({
-  dept_id: [10, 20, 40],
-  dept_name: ['Engineering', 'Sales', 'Marketing']
-});
-
-console.log('Employees:');
-console.log(employees.toString());
-
-console.log('\nDepartments:');
-console.log(departments.toString());
-
-// Inner join
-const inner = innerJoin(employees, departments, { by: 'dept_id' });
-console.log('\nInner Join (matching rows only):');
-console.log(inner.toString());
-
-// Left join
-const left = leftJoin(employees, departments, { by: 'dept_id' });
-console.log('\nLeft Join (all employees):');
-console.log(left.toString());
-
-// ============================================================================
-// Example 11: Binding DataFrames
-// ============================================================================
-
-console.log('\n' + '-'.repeat(80));
-console.log('Example 11: Binding DataFrames');
-console.log('-'.repeat(80) + '\n');
-
-const batch1 = new DataFrame({
-  id: [1, 2, 3],
-  value: [10, 20, 30]
-});
-
-const batch2 = new DataFrame({
-  id: [4, 5, 6],
-  value: [40, 50, 60]
-});
-
-console.log('Batch 1:');
-console.log(batch1.toString());
-
-console.log('\nBatch 2:');
-console.log(batch2.toString());
-
-const combined = bindRows(batch1, batch2);
-console.log('\nCombined (bindRows):');
-console.log(combined.toString());
-
-// ============================================================================
-// Example 12: I/O Operations (CSV)
-// ============================================================================
-
-console.log('\n' + '-'.repeat(80));
-console.log('Example 12: I/O Operations');
-console.log('-'.repeat(80) + '\n');
-
-// Create sample data
-const ioData = new DataFrame({
-  id: [1, 2, 3],
-  name: ['Alice', 'Bob', 'Charlie'],
-  value: [10.5, 20.75, 30.25]
-});
-
-// Write to CSV string
-const csvString = writeCSV(ioData, null, { digits: 2 });
-console.log('CSV output:');
-console.log(csvString);
-
-// Read from CSV string
-const fromCSV = readCSV(csvString, { isString: true });
-console.log('\nRead back from CSV:');
-console.log(fromCSV.toString());
-
-// ============================================================================
-// Example 13: Real-World Workflow - Sales Analysis
-// ============================================================================
-
-console.log('\n' + '-'.repeat(80));
-console.log('Example 13: Real-World Workflow - Sales Analysis');
-console.log('-'.repeat(80) + '\n');
-
-const transactions = new DataFrame({
-  date: ['2026-01-01', '2026-01-01', '2026-01-02', '2026-01-02', '2026-01-03', '2026-01-03'],
-  product: ['Laptop', 'Mouse', 'Laptop', 'Keyboard', 'Mouse', 'Laptop'],
-  quantity: [2, 5, 1, 3, 8, 1],
-  price: [1000, 25, 1000, 50, 25, 1000],
-  region: ['North', 'North', 'South', 'South', 'East', 'East']
-});
-
-console.log('Raw transaction data:');
-console.log(transactions.toString());
-
-// Complex analysis pipeline
-const analysis = transactions
-  // Calculate revenue per transaction
-  .mutate({
-    revenue: row => row.quantity * row.price
-  })
-  // Group by product and region
-  .groupBy('product', 'region')
-  .summarize({
-    total_quantity: g => g.col('quantity').sum(),
-    total_revenue: g => g.col('revenue').sum(),
-    avg_price: g => g.col('price').mean(),
-    transactions: g => g.nrow
+    price_per_unit: row => row.revenue / row.units,
+    is_premium: row => row.product === 'B'
   });
 
-console.log('\nSales analysis (grouped by product and region):');
-console.log(analysis.arrange('total_revenue', { decreasing: true }).toString());
+console.log('Filtered and enriched:');
+console.log(enriched.toString());
+console.log();
 
-// Top products by revenue
-const topProducts = analysis
-  .groupBy('product')
-  .summarize({
-    total_revenue: g => g.col('total_revenue').sum()
+// ============================================================================
+// Example 2: Window Functions - Time Series Analysis
+// ============================================================================
+
+console.log('\n📈 Example 2: Window Functions - Time Series Analysis\n');
+
+const timeSeries = new DataFrame({
+  date: ['2024-01', '2024-02', '2024-03', '2024-04', '2024-05', '2024-06'],
+  value: [100, 120, 115, 130, 125, 140]
+});
+
+// Add window function columns
+const withWindows = timeSeries.mutate({
+  lag_1: () => lag(timeSeries, 'value', 1, null),
+  lead_1: () => lead(timeSeries, 'value', 1, null),
+  change: (row, i) => {
+    const lagged = lag(timeSeries, 'value', 1, null);
+    return lagged[i] !== null ? row.value - lagged[i] : null;
+  },
+  cumulative: () => cumsum(timeSeries, 'value'),
+  moving_avg: () => cummean(timeSeries, 'value')
+});
+
+console.log('Time series with window functions:');
+console.log(withWindows.toString());
+console.log();
+
+// ============================================================================
+// Example 3: Grouped Operations with Window Functions
+// ============================================================================
+
+console.log('\n📊 Example 3: Grouped Window Functions\n');
+
+const multiProduct = new DataFrame({
+  product: ['A', 'A', 'A', 'B', 'B', 'B'],
+  month: [1, 2, 3, 1, 2, 3],
+  sales: [100, 120, 115, 80, 95, 90]
+});
+
+const withGroupedWindows = multiProduct.mutate({
+  rank_in_product: () => rank(multiProduct, 'sales', ['product'], true),
+  cumsum_by_product: () => cumsum(multiProduct, 'sales', ['product']),
+  lag_by_product: () => lag(multiProduct, 'sales', 1, null, ['product']),
+  row_num: () => row_number(multiProduct, ['product'])
+});
+
+console.log('Grouped window functions:');
+console.log(withGroupedWindows.toString());
+console.log();
+
+// ============================================================================
+// Example 4: Method Chaining with chain()
+// ============================================================================
+
+console.log('\n⛓️ Example 4: Fluent Method Chaining\n');
+
+const employees = new DataFrame({
+  name: ['Alice', 'Bob', 'Charlie', 'Diana', 'Eve', 'Frank'],
+  dept: ['Engineering', 'Sales', 'Engineering', 'Sales', 'Engineering', 'Sales'],
+  salary: [95000, 75000, 105000, 85000, 92000, 78000],
+  experience: [5, 3, 8, 4, 6, 2]
+});
+
+const analysis = chain(employees)
+  .filter(row => row.salary >= 80000)
+  .mutate({
+    salary_per_year: row => row.salary / row.experience
   })
-  .arrange('total_revenue', { decreasing: true });
+  .arrange(['dept', 'salary'], { decreasing: [false, true] })
+  .select('name', 'dept', 'salary', 'salary_per_year')
+  .value();
 
-console.log('\nTop products by total revenue:');
-console.log(topProducts.toString());
+console.log('Chained operations result:');
+console.log(analysis.toString());
+console.log();
 
 // ============================================================================
-// Summary
+// Example 5: Functional Composition with pipe()
 // ============================================================================
 
-console.log('\n' + '='.repeat(80));
-console.log('  PHASE 4 COMPLETE - DATA MANIPULATION MASTERY!');
-console.log('='.repeat(80));
-console.log('\n✓ DataFrame class with column-oriented storage');
-console.log('✓ Selection: select(), filter(), slice(), head(), tail()');
-console.log('✓ Transformation: mutate(), rename(), arrange()');
-console.log('✓ Grouping: groupBy() with summarize()');
-console.log('✓ Reshaping: pivotLonger(), pivotWider()');
-console.log('✓ String ops: separate(), unite()');
-console.log('✓ Missing data: dropNA(), fillNA()');
-console.log('✓ Joins: inner, left, right, full, anti, semi');
-console.log('✓ Binding: bindRows(), bindCols()');
-console.log('✓ I/O: readCSV(), writeCSV(), readJSON(), writeJSON()');
-console.log('✓ Fluent API with method chaining');
-console.log('✓ Pretty printing with toString()');
-console.log('\n🎉 Tidyverse-style data manipulation in JavaScript!');
-console.log('\n');
+console.log('\n🔧 Example 5: Functional Composition\n');
+
+const filterHighPerformers = df => df.filter(row => row.salary > 90000);
+const addBonus = df => df.mutate({ bonus: row => row.salary * 0.1 });
+const selectRelevant = df => df.select('name', 'dept', 'salary', 'bonus');
+
+const bonusReport = pipe(
+  employees,
+  filterHighPerformers,
+  addBonus,
+  selectRelevant
+);
+
+console.log('Functional pipeline result:');
+console.log(bonusReport.toString());
+console.log();
+
+// ============================================================================
+// Example 6: Group-by and Aggregation
+// ============================================================================
+
+console.log('\n📁 Example 6: Grouping and Aggregation\n');
+
+const departmentStats = employees.groupBy('dept').summarize({
+  count: gdf => gdf.nrow,
+  avg_salary: gdf => {
+    const salaries = gdf.colArray('salary');
+    return salaries.reduce((a, b) => a + b, 0) / salaries.length;
+  },
+  total_experience: gdf => {
+    const exp = gdf.colArray('experience');
+    return exp.reduce((a, b) => a + b, 0);
+  },
+  max_salary: gdf => Math.max(...gdf.colArray('salary'))
+});
+
+console.log('Department statistics:');
+console.log(departmentStats.toString());
+console.log();
+
+// ============================================================================
+// Example 7: Integration with Linear Models
+// ============================================================================
+
+console.log('\n📊 Example 7: DataFrame → Linear Regression\n');
+
+const experimentData = new DataFrame({
+  temperature: [20, 25, 30, 35, 40, 45, 50],
+  yield: [45, 52, 58, 65, 71, 76, 82]
+});
+
+// Extract data for modeling
+const X = experimentData.colArray('temperature');
+const y = experimentData.colArray('yield');
+
+// Fit linear model
+const model = lm(y, [X]);
+
+console.log('Linear Model Results:');
+console.log(`  R²: ${model.r_squared.toFixed(4)}`);
+console.log(`  Coefficients:`);
+console.log(`    Intercept: ${model.coefficients[0].toFixed(3)}`);
+console.log(`    Slope: ${model.coefficients[1].toFixed(3)}`);
+console.log(`  P-values:`);
+console.log(`    Intercept: ${model.p_values[0].toFixed(4)}`);
+console.log(`    Slope: ${model.p_values[1].toFixed(6)}`);
+console.log();
+
+// Add predictions back to DataFrame
+const withPredictions = experimentData.mutate({
+  predicted: model.fitted_values,
+  residual: model.residuals
+});
+
+console.log('Data with predictions:');
+console.log(withPredictions.toString());
+console.log();
+
+// ============================================================================
+// Example 8: Advanced - Logistic Regression with DataFrame
+// ============================================================================
+
+console.log('\n🤖 Example 8: Logistic Regression for Classification\n');
+
+const creditData = new DataFrame({
+  income: [30, 45, 60, 75, 90, 105, 120, 135],
+  debt_ratio: [0.8, 0.7, 0.6, 0.5, 0.4, 0.3, 0.2, 0.1],
+  approved: [0, 0, 0, 0, 1, 1, 1, 1]
+});
+
+const X_credit = [creditData.colArray('income'), creditData.colArray('debt_ratio')];
+const y_credit = creditData.colArray('approved');
+
+const logitModel = glm(y_credit, X_credit, { family: binomial() });
+
+console.log('Logistic Regression Results:');
+console.log(`  Deviance: ${logitModel.deviance.toFixed(4)}`);
+console.log(`  AIC: ${logitModel.aic.toFixed(2)}`);
+console.log(`  Coefficients:`);
+logitModel.coefficients.forEach((coef, i) => {
+  const names = ['Intercept', 'Income', 'Debt Ratio'];
+  console.log(`    ${names[i]}: ${coef.toFixed(4)}`);
+});
+console.log();
+
+// ============================================================================
+// Example 9: Complex Data Pipeline
+// ============================================================================
+
+console.log('\n🚀 Example 9: Complete Data Analysis Pipeline\n');
+
+const rawData = new DataFrame({
+  id: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10],
+  category: ['A', 'B', 'A', 'B', 'A', 'B', 'A', 'B', 'A', 'B'],
+  value: [12, 15, 18, 14, 20, 16, 22, 19, 25, 21],
+  cost: [5, 7, 6, 8, 7, 9, 8, 10, 9, 11]
+});
+
+const pipeline = pipe(
+  rawData,
+  // 1. Add derived columns
+  df => df.mutate({
+    profit: row => row.value - row.cost,
+    margin: row => (row.value - row.cost) / row.value
+  }),
+  // 2. Add window functions
+  df => df.mutate({
+    rank_in_category: () => rank(df, 'profit', ['category'], true),
+    cumulative_profit: () => cumsum(df, 'profit', ['category'])
+  }),
+  // 3. Filter top performers
+  df => df.filter(row => row.rank_in_category <= 3),
+  // 4. Sort by category and profit
+  df => df.arrange(['category', 'profit'], { decreasing: [false, true] })
+);
+
+console.log('Complete pipeline result:');
+console.log(pipeline.toString());
+console.log();
+
+console.log('✅ Demo complete! Phase 4 is fully functional.');
+console.log('\n🎉 Aleatory now has R/tidyverse-level data manipulation!');
