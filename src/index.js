@@ -11,6 +11,7 @@ import { dbinom, pbinom, qbinom, rbinom } from './distributions/binomial.js';
 import { dpois, ppois, qpois, rpois } from './distributions/poisson.js';
 import { t_test } from './stats/t_test.js';
 import { lm, predict } from './models/lm.js';
+import { anova, printAnova } from './models/anova.js';
 
 export { Vector, Factor, summary };
 
@@ -26,7 +27,7 @@ export { dpois, ppois, qpois, rpois };
 export { t_test };
 
 // Models
-export { lm, predict };
+export { lm, predict, anova, printAnova };
 
 // Base-R-ish convenience constructors
 export function c(x) {
@@ -110,4 +111,6 @@ export default {
   // Models
   lm,
   predict,
+  anova,
+  printAnova,
 };
