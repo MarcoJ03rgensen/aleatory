@@ -19,6 +19,8 @@ import DataFrame from './data/DataFrame.js';
 import { pivotLonger, pivotWider, separate, unite, dropNA, fillNA } from './data/reshape.js';
 import { innerJoin, leftJoin, rightJoin, fullJoin, antiJoin, semiJoin, bindRows, bindCols } from './data/joins.js';
 import { readCSV, writeCSV, readJSON, writeJSON } from './data/io.js';
+import { pipe, chain } from './data/pipe.js';
+import { row_number, rank, lag, lead, cumsum, cummean, first, last } from './data/window.js';
 
 export { Vector, Factor, summary };
 
@@ -46,6 +48,12 @@ export { DataFrame };
 export { pivotLonger, pivotWider, separate, unite, dropNA, fillNA };
 export { innerJoin, leftJoin, rightJoin, fullJoin, antiJoin, semiJoin, bindRows, bindCols };
 export { readCSV, writeCSV, readJSON, writeJSON };
+
+// Functional composition and chaining
+export { pipe, chain };
+
+// Window functions (SQL-style analytics)
+export { row_number, rank, lag, lead, cumsum, cummean, first, last };
 
 // Base-R-ish convenience constructors
 export function c(x) {
@@ -168,4 +176,16 @@ export default {
   writeCSV,
   readJSON,
   writeJSON,
+  // Functional composition
+  pipe,
+  chain,
+  // Window functions
+  row_number,
+  rank,
+  lag,
+  lead,
+  cumsum,
+  cummean,
+  first,
+  last,
 };
