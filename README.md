@@ -4,18 +4,20 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Node.js](https://img.shields.io/badge/node-%3E%3D16.0.0-brightgreen)](https://nodejs.org/)
+[![CI](https://github.com/MarcoJ03rgensen/aleatory/workflows/CI/badge.svg)](https://github.com/MarcoJ03rgensen/aleatory/actions)
 
 ---
 
-## 📦 Current Status: Phase 3 COMPLETE! 🎉
+## 📦 Current Status: Phase 4 COMPLETE! 🎉
 
-Aleatory has successfully completed Phase 3: Linear Models! All major statistical modeling features are now implemented.
+Aleatory has successfully completed **Phase 4: Data Manipulation**! Now featuring a full-powered DataFrame with tidyverse-style operations, window functions, and seamless integration with statistical models.
 
 ### ✅ Implemented
 
 **Core Objects**
 - `Vector` – numeric vectors with NA support
 - `Factor` – categorical data with levels
+- `DataFrame` – tabular data structure with R/tidyverse-style operations ✨ NEW!
 
 **Base Functions**
 - `summary()` – R-style summaries for Vector and Factor
@@ -35,7 +37,7 @@ All distributions follow R's standard interface with `lower_tail`, `log`, and `l
 - `t_test()` – Student's t-test (one-sample, two-sample, paired)
 - Welch's t-test for unequal variances
 
-**Linear Models** ✨
+**Linear Models**
 - `lm()` – linear regression using QR decomposition
 - `predict()` – predictions from fitted models
 - `anova()` – analysis of variance tables and model comparison
@@ -45,7 +47,7 @@ All distributions follow R's standard interface with `lower_tail`, `log`, and `l
 - Full diagnostic statistics (R², F-test, t-tests, standard errors)
 - Residual analysis
 
-**Generalized Linear Models** ✨
+**Generalized Linear Models**
 - `glm()` – generalized linear models using IRWLS
 - `predictGlm()` – predictions with link/response options
 - **Families**: `gaussian()`, `binomial()`, `poisson()`, `Gamma()`
@@ -53,7 +55,7 @@ All distributions follow R's standard interface with `lower_tail`, `log`, and `l
 - Full GLM diagnostics: deviance, AIC, multiple residual types
 - Convergence checking and iteration control
 
-**Model Diagnostics & Summaries** ✨ NEW!
+**Model Diagnostics & Summaries**
 - `diagnostics()` – influence measures and diagnostic statistics
   - Leverage (hat values)
   - Cook's distance
@@ -64,6 +66,45 @@ All distributions follow R's standard interface with `lower_tail`, `log`, and `l
 - `predictWithInterval()` – prediction and confidence intervals
 - `summaryLM()` / `summaryGLM()` – R-style model summaries
 - `printModelSummary()` – formatted summary output with significance codes
+
+**DataFrame Operations** ✨ NEW!
+- `DataFrame` – column-oriented tabular data structure
+- `select()` – select columns
+- `filter()` – filter rows by condition
+- `mutate()` – add or modify columns
+- `arrange()` – sort by one or more columns
+- `groupBy()` – group data for aggregation
+- `summarize()` – aggregate grouped data
+- `rename()` – rename columns
+- `head()` / `tail()` – preview data
+- `slice()` – subset by row indices
+
+**Window Functions** ✨ NEW!
+- `row_number()` – row numbers within groups
+- `rank()` – ranking with tie handling
+- `lag()` / `lead()` – access previous/next values
+- `cumsum()` – cumulative sum
+- `cummean()` – cumulative mean
+- `first()` / `last()` – first/last value in groups
+- All support partitioning for grouped operations
+
+**Data Reshaping** ✨ NEW!
+- `pivotLonger()` / `pivotWider()` – reshape data
+- `separate()` / `unite()` – split/combine columns
+- `dropNA()` / `fillNA()` – handle missing data
+
+**Data Joins** ✨ NEW!
+- `innerJoin()`, `leftJoin()`, `rightJoin()`, `fullJoin()`
+- `semiJoin()`, `antiJoin()` – filtering joins
+- `bindRows()`, `bindCols()` – combine DataFrames
+
+**Data I/O** ✨ NEW!
+- `readCSV()` / `writeCSV()` – CSV import/export
+- `readJSON()` / `writeJSON()` – JSON import/export
+
+**Functional Composition** ✨ NEW!
+- `pipe()` – functional composition of operations
+- `chain()` – method chaining wrapper
 
 ---
 
@@ -79,6 +120,9 @@ npm install  # (no dependencies yet)
 
 ```bash
 npm run dev
+
+# Or try the new DataFrame demo!
+node examples/dataframe_demo.js
 ```
 
 ### Run Tests
@@ -93,11 +137,92 @@ Golden-fixture tests validate against reference values from **R 4.3.0**.
 
 ## 📚 Quick Examples
 
+### DataFrame Operations
+
+```javascript
+import { DataFrame, chain, pipe } from 'aleatory';
+
+// Create a DataFrame
+const df = new DataFrame({
+  name: ['Alice', 'Bob', 'Charlie', 'Diana'],
+  age: [25, 30, 35, 28],
+  salary: [50000, 60000, 75000, 55000],
+  dept: ['Engineering', 'Sales', 'Engineering', 'Sales']
+});
+
+// Basic operations
+const filtered = df
+  .filter(row => row.age >= 28)
+  .select('name', 'age', 'salary')
+  .arrange('salary', { decreasing: true });
+
+console.log(filtered.toString());
+// DataFrame [3 x 3]
+// name <factor>  age <numeric>  salary <numeric>
+// ------------------------------------------------
+// Charlie        35.00          75000.00
+// Diana          28.00          55000.00
+// Bob            30.00          60000.00
+
+// Method chaining
+const result = chain(df)
+  .filter(row => row.salary > 50000)
+  .mutate({
+    salary_k: row => row.salary / 1000
+  })
+  .groupBy('dept')
+  .value()
+  .summarize({
+    avg_salary: gdf => {
+      const salaries = gdf.colArray('salary');
+      return salaries.reduce((a, b) => a + b) / salaries.length;
+    }
+  });
+
+// Functional composition
+const addBonus = df => df.mutate({ bonus: row => row.salary * 0.1 });
+const filterSenior = df => df.filter(row => row.age >= 30);
+
+const seniorWithBonus = pipe(df, filterSenior, addBonus);
+```
+
+### Window Functions
+
+```javascript
+import { DataFrame, lag, lead, cumsum, rank } from 'aleatory';
+
+const timeSeries = new DataFrame({
+  date: ['2024-01', '2024-02', '2024-03', '2024-04'],
+  value: [100, 120, 115, 130]
+});
+
+// Add window function columns
+const withWindows = timeSeries.mutate({
+  previous: () => lag(timeSeries, 'value', 1, null),
+  next: () => lead(timeSeries, 'value', 1, null),
+  running_total: () => cumsum(timeSeries, 'value'),
+  rank: () => rank(timeSeries, 'value', [], true) // decreasing
+});
+
+console.log(withWindows.toString());
+
+// Grouped window functions
+const sales = new DataFrame({
+  product: ['A', 'A', 'B', 'B'],
+  month: [1, 2, 1, 2],
+  revenue: [100, 120, 80, 95]
+});
+
+const ranked = sales.mutate({
+  rank_in_product: () => rank(sales, 'revenue', ['product'], true),
+  cumulative: () => cumsum(sales, 'revenue', ['product'])
+});
+```
+
 ### Distribution Functions
 
 ```javascript
-import aleatory from 'aleatory';
-const { Vector, dnorm, pnorm, qnorm, rnorm, t_test, dbinom, dpois } = aleatory;
+import { dnorm, pnorm, qnorm, rnorm, dbinom, dpois } from 'aleatory';
 
 // Normal distribution
 dnorm(0);                        // 0.3989 (density at x=0)
@@ -119,6 +244,8 @@ const events = rpois(100, 3.5);
 ### Statistical Tests
 
 ```javascript
+import { t_test } from 'aleatory';
+
 // t-test
 const x = [10, 12, 13, 11, 15];
 const result = t_test(x, null, { mu: 10 });
@@ -140,7 +267,7 @@ const result2 = t_test(x, y);  // Welch's t-test
 ### Linear Regression
 
 ```javascript
-import { lm, predict, anova } from 'aleatory';
+import { lm, predict, anova, DataFrame } from 'aleatory';
 
 // Simple linear regression
 const x = [1, 2, 3, 4, 5];
@@ -150,8 +277,18 @@ const fit = lm(y, [x]);
 console.log(fit.coefficients);      // [intercept, slope]
 console.log(fit.r_squared);         // R²
 console.log(fit.p_values);          // p-values for coefficients
-console.log(fit.fitted_values);     // fitted values
-console.log(fit.residuals);         // residuals
+
+// Use with DataFrame
+const df = new DataFrame({ x, y });
+const X = df.colArray('x');
+const Y = df.colArray('y');
+const model = lm(Y, [X]);
+
+// Add predictions back to DataFrame
+const withPred = df.mutate({
+  predicted: model.fitted_values,
+  residual: model.residuals
+});
 
 // ANOVA table
 const aov = anova(fit);
@@ -162,119 +299,36 @@ const x1 = [1, 2, 3, 4, 5];
 const x2 = [2, 3, 4, 5, 6];
 const y2 = [10, 12, 15, 18, 20];
 const fit2 = lm(y2, [x1, x2]);
-
-// Model comparison
-const fit_simple = lm(y2, [x1]);
-const comparison = anova(fit_simple, fit2);
-console.log(comparison.table);      // F-test for nested models
-
-// Predictions
-const x_new = [6, 7, 8];
-const predictions = predict(fit, [x_new]);
-
-// Model through origin (no intercept)
-const fit3 = lm(y, [x], { intercept: false });
 ```
 
 ### Generalized Linear Models
 
 ```javascript
-import { glm, predictGlm, binomial, poisson, gaussian, Gamma } from 'aleatory';
+import { glm, predictGlm, binomial, poisson, DataFrame } from 'aleatory';
 
 // Logistic regression
-const x = [1, 2, 3, 4, 5, 6, 7, 8];
-const y = [0, 0, 0, 0, 1, 1, 1, 1];
-const logit_fit = glm(y, [x], { family: binomial() });
+const creditData = new DataFrame({
+  income: [30, 45, 60, 75, 90, 105, 120, 135],
+  debt: [0.8, 0.7, 0.6, 0.5, 0.4, 0.3, 0.2, 0.1],
+  approved: [0, 0, 0, 0, 1, 1, 1, 1]
+});
 
-console.log(logit_fit.coefficients);    // [intercept, slope]
+const X = [creditData.colArray('income'), creditData.colArray('debt')];
+const y = creditData.colArray('approved');
+
+const logit_fit = glm(y, X, { family: binomial() });
+
+console.log(logit_fit.coefficients);    // [intercept, income, debt]
 console.log(logit_fit.deviance);        // residual deviance
 console.log(logit_fit.aic);             // AIC
 
 // Predict probabilities
-const x_new = [3, 5, 7];
-const probs = predictGlm(logit_fit, [x_new], 'response');
-console.log(probs);                     // [P(y=1|x=3), P(y=1|x=5), P(y=1|x=7)]
+const x_new = [[50, 70, 90], [0.6, 0.4, 0.3]];
+const probs = predictGlm(logit_fit, x_new, 'response');
 
 // Poisson regression (count data)
 const counts = [2, 3, 5, 8, 13];
 const pois_fit = glm(counts, [x.slice(0, 5)], { family: poisson() });
-
-// Gamma regression with log link
-const times = [2, 4, 8, 16, 32];
-const gamma_fit = glm(times, [x.slice(0, 5)], { family: Gamma('log') });
-
-// Gaussian GLM (equivalent to lm)
-const gauss_fit = glm(y, [x], { family: gaussian() });
-
-// Multiple predictors
-const x1 = [1, 2, 3, 4, 5, 6];
-const x2 = [0.5, 1.0, 1.5, 2.0, 2.5, 3.0];
-const y_multi = [0, 0, 0, 1, 1, 1];
-const multi_fit = glm(y_multi, [x1, x2], { family: binomial() });
-```
-
-### Model Diagnostics and Summaries
-
-```javascript
-import { 
-  lm, 
-  diagnostics, 
-  confint, 
-  predictWithInterval,
-  summarizeModel,
-  printModelSummary 
-} from 'aleatory';
-
-const x = [1, 2, 3, 4, 5];
-const y = [2.1, 3.9, 6.2, 7.8, 10.1];
-const fit = lm(y, [x]);
-
-// R-style summary
-const summary = summarizeModel(fit);
-console.log(printModelSummary(summary));
-// Output:
-// Call:
-// lm(y ~ x)
-// 
-// Residuals:
-//     Min       1Q   Median       3Q      Max
-//  -0.1000  -0.0600   0.0200   0.0600   0.1000
-// 
-// Coefficients:
-// Term             Estimate  Std. Error   t value  Pr(>|t|)   
-// (Intercept)     -0.010000    0.246221    -0.041    0.9698    
-// x1               2.010000    0.080278    25.026  < 0.0001 ***
-// ---
-// Signif. codes:  0 '***' 0.001 '**' 0.01 '*' 0.05 '.' 0.1 ' ' 1
-// 
-// Residual standard error: 0.0874 on 3 degrees of freedom
-// Multiple R-squared:  0.9953,	Adjusted R-squared:  0.9937
-// F-statistic: 626.30 on 1 and 3 DF,  p-value: < 0.0001
-
-// Confidence intervals for coefficients
-const ci = confint(fit, 0.95);
-console.log(ci);
-// [
-//   { coefficient: '(Intercept)', estimate: -0.01, lower: -0.768, upper: 0.748 },
-//   { coefficient: 'x1', estimate: 2.01, lower: 1.780, upper: 2.240 }
-// ]
-
-// Prediction intervals
-const x_new = [6, 7, 8];
-const pred = predictWithInterval(fit, [x_new], 0.95, 'prediction');
-console.log(pred.predictions);
-// [
-//   { fit: 12.05, lower: 11.68, upper: 12.42, se: 0.095 },
-//   { fit: 14.06, lower: 13.68, upper: 14.44, se: 0.095 },
-//   { fit: 16.07, lower: 15.69, upper: 16.45, se: 0.095 }
-// ]
-
-// Diagnostics - leverage, Cook's D, influence
-const diag = diagnostics(fit);
-console.log(diag.leverage);              // Hat values
-console.log(diag.cooks_distance);        // Cook's distance
-console.log(diag.influential);           // Influential observations
-console.log(diag.dfbetas);               // Influence on coefficients
 ```
 
 ---
@@ -289,6 +343,8 @@ console.log(diag.dfbetas);               // Influence on coefficients
 - `tests/models/anova.test.js` – ANOVA tables and model comparison
 - `tests/models/glm.test.js` – Generalized linear models
 - `tests/models/diagnostics.test.js` – Model diagnostics and intervals
+- `tests/data/dataframe.test.js` – DataFrame operations ✨ NEW!
+- `tests/data/window.test.js` – Window functions ✨ NEW!
 
 Tolerance: `1e-6` for most computations.
 
@@ -303,7 +359,7 @@ Tolerance: `1e-6` for most computations.
 - [x] Binomial, Poisson
 - [x] Replace normal approximations in `t_test()` with proper t-quantiles
 
-### ✅ Phase 3: Linear Models (COMPLETE) 🎉
+### ✅ Phase 3: Linear Models (COMPLETE)
 - [x] `lm()` – linear regression using QR decomposition
 - [x] `predict()` – predictions from fitted models
 - [x] `anova()` – analysis of variance
@@ -311,13 +367,16 @@ Tolerance: `1e-6` for most computations.
 - [x] Model diagnostics and summaries
 - [x] Confidence/prediction intervals
 
-### Phase 4: Data Manipulation (NEXT)
-- [ ] DataFrame object
-- [ ] tidyverse-style operations (filter, mutate, group_by)
-- [ ] Data reshaping (pivot, melt)
-- [ ] Data import/export (CSV, JSON)
+### ✅ Phase 4: Data Manipulation (COMPLETE) 🎉
+- [x] DataFrame object
+- [x] tidyverse-style operations (filter, mutate, group_by, summarize)
+- [x] Window functions (lag, lead, rank, cumsum, etc.)
+- [x] Data reshaping (pivot, separate, unite)
+- [x] Data joins (inner, left, right, full, semi, anti)
+- [x] Data import/export (CSV, JSON)
+- [x] Method chaining and functional composition
 
-### Phase 5: Additional Distributions
+### Phase 5: Additional Distributions (NEXT)
 - [ ] Exponential distribution
 - [ ] Gamma distribution
 - [ ] Beta distribution
@@ -346,7 +405,7 @@ This project is in active development. Contributions welcome!
 
 ---
 
-## 📄 License
+## 📜 License
 
 MIT License – see [LICENSE](LICENSE) for details.
 
@@ -356,6 +415,7 @@ MIT License – see [LICENSE](LICENSE) for details.
 
 - **Repository**: [github.com/MarcoJ03rgensen/aleatory](https://github.com/MarcoJ03rgensen/aleatory)
 - **Author**: Marco Birkedahl Jørgensen
+- **CI/CD**: Automated testing on Node.js 18.x, 20.x, 22.x
 
 ---
 
