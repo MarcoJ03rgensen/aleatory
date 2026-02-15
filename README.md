@@ -7,9 +7,9 @@
 
 ---
 
-## 📦 Current Status: Phase 3 In Progress! 🚀
+## 📦 Current Status: Phase 3 Nearly Complete! 🚀
 
-Aleatory has completed Phase 2 and is now implementing Phase 3: Linear Models!
+Aleatory has completed Phase 2 and is now finalizing Phase 3: Linear Models!
 
 ### ✅ Implemented
 
@@ -38,10 +38,20 @@ All distributions follow R's standard interface with `lower_tail`, `log`, and `l
 **Linear Models** ✨ NEW!
 - `lm()` – linear regression using QR decomposition
 - `predict()` – predictions from fitted models
+- `anova()` – analysis of variance tables and model comparison
+- `printAnova()` – formatted ANOVA output
 - Simple and multiple regression
 - Models with/without intercept
 - Full diagnostic statistics (R², F-test, t-tests, standard errors)
 - Residual analysis
+
+**Generalized Linear Models** ✨ NEW!
+- `glm()` – generalized linear models using IRWLS
+- `predictGlm()` – predictions with link/response options
+- **Families**: `gaussian()`, `binomial()`, `poisson()`, `Gamma()`
+- **Link functions**: identity, log, logit, probit, inverse, sqrt
+- Full GLM diagnostics: deviance, AIC, multiple residual types
+- Convergence checking and iteration control
 
 ---
 
@@ -118,7 +128,7 @@ const result2 = t_test(x, y);  // Welch's t-test
 ### Linear Regression
 
 ```javascript
-import { lm, predict } from 'aleatory';
+import { lm, predict, anova } from 'aleatory';
 
 // Simple linear regression
 const x = [1, 2, 3, 4, 5];
@@ -131,11 +141,20 @@ console.log(fit.p_values);          // p-values for coefficients
 console.log(fit.fitted_values);     // fitted values
 console.log(fit.residuals);         // residuals
 
+// ANOVA table
+const aov = anova(fit);
+console.log(aov.table);             // ANOVA decomposition
+
 // Multiple regression
 const x1 = [1, 2, 3, 4, 5];
 const x2 = [2, 3, 4, 5, 6];
 const y2 = [10, 12, 15, 18, 20];
 const fit2 = lm(y2, [x1, x2]);
+
+// Model comparison
+const fit_simple = lm(y2, [x1]);
+const comparison = anova(fit_simple, fit2);
+console.log(comparison.table);      // F-test for nested models
 
 // Predictions
 const x_new = [6, 7, 8];
@@ -143,6 +162,43 @@ const predictions = predict(fit, [x_new]);
 
 // Model through origin (no intercept)
 const fit3 = lm(y, [x], { intercept: false });
+```
+
+### Generalized Linear Models
+
+```javascript
+import { glm, predictGlm, binomial, poisson, gaussian, Gamma } from 'aleatory';
+
+// Logistic regression
+const x = [1, 2, 3, 4, 5, 6, 7, 8];
+const y = [0, 0, 0, 0, 1, 1, 1, 1];
+const logit_fit = glm(y, [x], { family: binomial() });
+
+console.log(logit_fit.coefficients);    // [intercept, slope]
+console.log(logit_fit.deviance);        // residual deviance
+console.log(logit_fit.aic);             // AIC
+
+// Predict probabilities
+const x_new = [3, 5, 7];
+const probs = predictGlm(logit_fit, [x_new], 'response');
+console.log(probs);                     // [P(y=1|x=3), P(y=1|x=5), P(y=1|x=7)]
+
+// Poisson regression (count data)
+const counts = [2, 3, 5, 8, 13];
+const pois_fit = glm(counts, [x.slice(0, 5)], { family: poisson() });
+
+// Gamma regression with log link
+const times = [2, 4, 8, 16, 32];
+const gamma_fit = glm(times, [x.slice(0, 5)], { family: Gamma('log') });
+
+// Gaussian GLM (equivalent to lm)
+const gauss_fit = glm(y, [x], { family: gaussian() });
+
+// Multiple predictors
+const x1 = [1, 2, 3, 4, 5, 6];
+const x2 = [0.5, 1.0, 1.5, 2.0, 2.5, 3.0];
+const y_multi = [0, 0, 0, 1, 1, 1];
+const multi_fit = glm(y_multi, [x1, x2], { family: binomial() });
 ```
 
 ---
@@ -154,6 +210,8 @@ const fit3 = lm(y, [x], { intercept: false });
 - `tests/distributions/*.test.js` – All distribution functions
 - `tests/stats/t_test.test.js` – t-test implementations
 - `tests/models/lm.test.js` – Linear regression
+- `tests/models/anova.test.js` – ANOVA tables and model comparison
+- `tests/models/glm.test.js` – Generalized linear models
 
 Tolerance: `1e-6` for most computations.
 
@@ -168,11 +226,11 @@ Tolerance: `1e-6` for most computations.
 - [x] Binomial, Poisson
 - [x] Replace normal approximations in `t_test()` with proper t-quantiles
 
-### Phase 3: Linear Models (IN PROGRESS)
+### Phase 3: Linear Models (NEARLY COMPLETE) ✨
 - [x] `lm()` – linear regression using QR decomposition
 - [x] `predict()` – predictions from fitted models
-- [ ] `anova()` – analysis of variance
-- [ ] `glm()` – generalized linear models
+- [x] `anova()` – analysis of variance
+- [x] `glm()` – generalized linear models
 - [ ] Model diagnostics and summaries
 - [ ] Confidence/prediction intervals
 
