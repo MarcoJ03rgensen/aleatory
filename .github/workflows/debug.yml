@@ -1,0 +1,48 @@
+name: Debug CI
+
+on:
+  push:
+    branches: [ feature/** ]
+
+jobs:
+  debug:
+    name: Debug Test Run
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20.x'
+    
+    - name: List files
+      run: |
+        echo "Source files:"
+        ls -la src/data/
+        echo ""
+        echo "Test files:"
+        ls -la tests/data/
+    
+    - name: Try importing modules
+      run: |
+        node --version
+        node -e "import('./src/data/DataFrame.js').then(() => console.log('DataFrame OK')).catch(e => console.error('DataFrame ERROR:', e))"
+        node -e "import('./src/data/window.js').then(() => console.log('window OK')).catch(e => console.error('window ERROR:', e))"
+        node -e "import('./src/data/pipe.js').then(() => console.log('pipe OK')).catch(e => console.error('pipe ERROR:', e))"
+    
+    - name: Run single test file
+      run: node --test tests/data/imports.test.js
+      continue-on-error: true
+    
+    - name: Run window tests
+      run: node --test tests/data/window.test.js
+      continue-on-error: true
+    
+    - name: Show any error details
+      if: failure()
+      run: |
+        echo "Test failed - checking for common issues"
+        node --test tests/data/window.test.js 2>&1 || true
