@@ -4,6 +4,7 @@
  */
 
 import { pf } from '../distributions/f.js';
+import { lm } from './lm.js';
 
 /**
  * Analysis of Variance for fitted linear models
@@ -57,70 +58,41 @@ function anovaTable(model) {
   const p = model.p;
   const intercept = model.coef_names[0] === '(Intercept)';
   const nPredictors = intercept ? p - 1 : p;
-  
+
   if (nPredictors === 0) {
     throw new Error('Cannot compute ANOVA for intercept-only model');
   }
-  
-  // Calculate sequential (Type I) sums of squares
-  // This matches R's default anova() behavior
-  const rows = [];
-  
-  // For sequential SS, we fit models incrementally:
-  // M0: y ~ 1 (intercept only)
-  // M1: y ~ x1
-  // M2: y ~ x1 + x2
-  // etc.
-  // SS for x2 = RSS(M1) - RSS(M2)
-  
-  // We'll compute this using the existing fitted model
-  // and the relationship: SS(predictor) = reduction in RSS
-  
-  // Start with total sum of squares around the mean
+
+  const df_residual = model.df.residual;
   const tss = model.tss;
   const rss = model.rss;
-  const mss = tss - rss; // Model sum of squares
-  
-  // For sequential decomposition, we need to fit reduced models
-  // However, for computational efficiency with the current implementation,
-  // we'll use an approximation based on the full model
-  
-  // Get the design matrix and response (if available)
-  // For now, we'll compute Type III-like SS (marginal, not sequential)
-  // which is more commonly used and doesn't require refitting
-  
-  // Calculate marginal SS for each predictor
-  // SS(xi) = (bi / SE(bi))^2 * MSE * df_residual / (t^2 / F = 1)
-  // Alternatively: SS(xi) = t^2 * MSE where t is the t-statistic
-  
-  const mse = model.sigma * model.sigma; // Mean squared error
-  const df_residual = model.df.residual;
-  
-  // Build rows for each predictor (excluding intercept)
-  const startIdx = intercept ? 1 : 0;
-  
-  for (let i = startIdx; i < p; i++) {
-    const term = model.coef_names[i];
-    const t_val = model.t_values[i];
-    const df = 1; // Each predictor has 1 df
-    
-    // For a single predictor: F = t^2, and SS = F * MSE
-    const f_value = t_val * t_val;
-    const sum_sq = f_value * mse;
-    const mean_sq = sum_sq / df;
-    const p_value = pf(f_value, df, df_residual, { lower_tail: false });
-    
+  const mse = rss / df_residual;
+
+  const { columns: predictorCols, names: predictorNames } = extractPredictorColumns(model, intercept);
+  const response = reconstructResponse(model);
+
+  const sequentialFits = buildSequentialFits(response, predictorCols, intercept);
+  const rows = [];
+  let prevRss = sequentialFits[0].rss;
+
+  for (let i = 0; i < predictorCols.length; i++) {
+    const fit = sequentialFits[i + 1];
+    const sumSq = prevRss - fit.rss;
+    const fValue = (sumSq / 1) / mse;
+    const pValue = pf(fValue, 1, df_residual, { lower_tail: false });
+
     rows.push({
-      term,
-      df,
-      sum_sq,
-      mean_sq,
-      f_value,
-      p_value
+      term: predictorNames[i],
+      df: 1,
+      sum_sq: sumSq,
+      mean_sq: sumSq,
+      f_value: fValue,
+      p_value: pValue
     });
+
+    prevRss = fit.rss;
   }
-  
-  // Add residuals row
+
   rows.push({
     term: 'Residuals',
     df: df_residual,
@@ -129,10 +101,9 @@ function anovaTable(model) {
     f_value: null,
     p_value: null
   });
-  
-  // Calculate total sum of squares for the model part
+
   const model_sum_sq = rows.slice(0, -1).reduce((acc, row) => acc + row.sum_sq, 0);
-  
+
   return {
     table: rows,
     total_df: n - (intercept ? 1 : 0),
@@ -177,14 +148,10 @@ function modelComparison(models) {
     }
   }
   
-  // Sort models by degrees of freedom (smaller to larger)
-  const sortedModels = models.slice().sort((a, b) => a.df.residual - b.df.residual);
-  
-  // Build comparison table
   const rows = [];
   
   for (let i = 0; i < nModels; i++) {
-    const model = sortedModels[i];
+    const model = models[i];
     const row = {
       model: i + 1,
       res_df: model.df.residual,
@@ -197,7 +164,7 @@ function modelComparison(models) {
     
     if (i > 0) {
       // Compare with previous (smaller) model
-      const prevModel = sortedModels[i - 1];
+      const prevModel = models[i - 1];
       
       // Difference in df and RSS
       const df_diff = prevModel.df.residual - model.df.residual;
@@ -225,8 +192,49 @@ function modelComparison(models) {
     table: rows,
     n: n,
     comparison: 'sequential',
-    note: 'Models are compared sequentially. Model 2 vs Model 1, Model 3 vs Model 2, etc.'
+    note: 'Models are compared in the order provided (sequential).'
   };
+}
+
+function extractPredictorColumns(model, intercept) {
+  const X = model._X;
+  if (!X) {
+    throw new Error('Design matrix is required to compute ANOVA table');
+  }
+
+  const cols = [];
+  const names = [];
+  const startIdx = intercept ? 1 : 0;
+
+  for (let j = startIdx; j < model.p; j++) {
+    cols.push(X.getColumn(j));
+    names.push(model.coef_names[j]);
+  }
+
+  return { columns: cols, names };
+}
+
+function reconstructResponse(model) {
+  const n = model.n;
+  const response = new Float64Array(n);
+  for (let i = 0; i < n; i++) {
+    response[i] = model.fitted_values[i] + model.residuals[i];
+  }
+  return Array.from(response);
+}
+
+function buildSequentialFits(response, predictorCols, intercept) {
+  const fits = [];
+  const predictors = [];
+
+  fits.push(lm(response, [], { intercept }));
+
+  for (let i = 0; i < predictorCols.length; i++) {
+    predictors.push(predictorCols[i]);
+    fits.push(lm(response, predictors.slice(), { intercept }));
+  }
+
+  return fits;
 }
 
 /**
