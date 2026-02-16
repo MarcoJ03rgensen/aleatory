@@ -22,6 +22,9 @@ import { readCSV, writeCSV, readJSON, writeJSON } from './data/io.js';
 import { pipe, chain } from './data/pipe.js';
 import { row_number, rank, lag, lead, cumsum, cummean, first, last } from './data/window.js';
 
+// Visualization module (optional - requires Plotly.js in browser)
+import * as vis from './vis/index.js';
+
 export { Vector, Factor, summary };
 
 // Distribution functions
@@ -54,6 +57,9 @@ export { pipe, chain };
 
 // Window functions (SQL-style analytics)
 export { row_number, rank, lag, lead, cumsum, cummean, first, last };
+
+// Visualization
+export { vis };
 
 // Base-R-ish convenience constructors
 export function c(x) {
@@ -188,4 +194,6 @@ export default {
   cummean,
   first,
   last,
+  // Visualization
+  vis,
 };

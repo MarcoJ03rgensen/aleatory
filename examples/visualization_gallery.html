@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aleatory Visualization Gallery</title>
+    <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        header {
+            text-align: center;
+            color: white;
+            margin-bottom: 40px;
+        }
+        h1 {
+            font-size: 3em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        .subtitle {
+            font-size: 1.2em;
+            opacity: 0.9;
+        }
+        .controls {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+            margin-bottom: 30px;
+            display: flex;
+            gap: 20px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+        label {
+            font-weight: 600;
+            font-size: 0.9em;
+            color: #333;
+        }
+        select, button {
+            padding: 10px 15px;
+            border: 2px solid #667eea;
+            border-radius: 6px;
+            font-size: 1em;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        select {
+            background: white;
+        }
+        button {
+            background: #667eea;
+            color: white;
+            font-weight: 600;
+            border: none;
+        }
+        button:hover {
+            background: #764ba2;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        }
+        .gallery {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+            gap: 30px;
+        }
+        .plot-card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        .plot-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 12px 48px rgba(0,0,0,0.3);
+        }
+        .plot-title {
+            font-size: 1.3em;
+            font-weight: 600;
+            margin-bottom: 15px;
+            color: #333;
+            border-bottom: 3px solid #667eea;
+            padding-bottom: 10px;
+        }
+        .plot-container {
+            width: 100%;
+            height: 400px;
+        }
+        .code-snippet {
+            background: #f5f5f5;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            padding: 15px;
+            margin-top: 15px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.85em;
+            overflow-x: auto;
+            color: #333;
+        }
+        @media (max-width: 768px) {
+            .gallery {
+                grid-template-columns: 1fr;
+            }
+            h1 {
+                font-size: 2em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🎲 Aleatory Visualization Gallery</h1>
+            <p class="subtitle">Beautiful, customizable charts for statistical computing</p>
+        </header>
+
+        <div class="controls">
+            <div class="control-group">
+                <label for="theme-select">Theme:</label>
+                <select id="theme-select">
+                    <option value="default">Default</option>
+                    <option value="dark">Dark</option>
+                    <option value="minimal">Minimal</option>
+                    <option value="colorblind">Colorblind</option>
+                    <option value="publication">Publication</option>
+                    <option value="ggplot2">ggplot2</option>
+                </select>
+            </div>
+            <button onclick="regenerateAll()">🎨 Regenerate All</button>
+            <button onclick="exportAll()">💾 Export All (SVG)</button>
+        </div>
+
+        <div class="gallery" id="gallery"></div>
+    </div>
+
+    <script type="module">
+        // Import from local build (or use CDN URL when deployed)
+        import * as aleatory from '../src/index.js';
+
+        // Global state
+        window.currentTheme = 'default';
+        window.aleatory = aleatory;
+
+        // Theme selector
+        document.getElementById('theme-select').addEventListener('change', (e) => {
+            window.currentTheme = e.target.value;
+            regenerateAll();
+        });
+
+        function getConfig() {
+            return aleatory.vis.applyTheme(window.currentTheme);
+        }
+
+        // Example data generators
+        function generateNormalData(n = 100) {
+            return aleatory.rnorm(n, { mean: 0, sd: 1 });
+        }
+
+        function generateRegressionData(n = 50) {
+            const x = Array.from({ length: n }, (_, i) => i / 5);
+            const y = x.map((xi, i) => 2 + 3 * xi + aleatory.rnorm(1, { mean: 0, sd: 1 })[0]);
+            return { x, y };
+        }
+
+        // Plot generators
+        const plots = [
+            {
+                title: 'Histogram with Density',
+                generator: () => {
+                    const data = generateNormalData(200);
+                    return aleatory.vis.createHistogram(data, getConfig(), {
+                        title: 'Normal Distribution Sample',
+                        showDensity: true,
+                        showNormal: true,
+                        xlab: 'Value',
+                        ylab: 'Density'
+                    });
+                },
+                code: `const data = aleatory.rnorm(200);
+const fig = aleatory.vis.createHistogram(data, config, {
+  showDensity: true,
+  showNormal: true
+});
+Plotly.newPlot('plot', fig.data, fig.layout);`
+            },
+            {
+                title: 'Q-Q Plot',
+                generator: () => {
+                    const data = generateNormalData(100);
+                    return aleatory.vis.createQQPlot(data, getConfig(), {
+                        title: 'Normality Assessment'
+                    });
+                },
+                code: `const data = aleatory.rnorm(100);
+const fig = aleatory.vis.createQQPlot(data, config);
+Plotly.newPlot('plot', fig.data, fig.layout);`
+            },
+            {
+                title: 'Scatter Plot with Regression',
+                generator: () => {
+                    const { x, y } = generateRegressionData();
+                    const fit = aleatory.lm(y, [x]);
+                    return aleatory.vis.createScatterPlot({ x, y }, getConfig(), {
+                        title: 'Linear Regression',
+                        fit: fit,
+                        showConfidence: false,
+                        xlab: 'X',
+                        ylab: 'Y'
+                    });
+                },
+                code: `const { x, y } = data;
+const fit = aleatory.lm(y, [x]);
+const fig = aleatory.vis.createScatterPlot({ x, y }, config, {
+  fit: fit
+});
+Plotly.newPlot('plot', fig.data, fig.layout);`
+            },
+            {
+                title: 'Residuals Plot',
+                generator: () => {
+                    const { x, y } = generateRegressionData();
+                    const fit = aleatory.lm(y, [x]);
+                    return aleatory.vis.createResidualsPlot(fit, getConfig(), {
+                        title: 'Residuals vs Fitted',
+                        showSmooth: true
+                    });
+                },
+                code: `const fit = aleatory.lm(y, [x]);
+const fig = aleatory.vis.createResidualsPlot(fit, config, {
+  showSmooth: true
+});
+Plotly.newPlot('plot', fig.data, fig.layout);`
+            },
+            {
+                title: 'Kernel Density Estimate',
+                generator: () => {
+                    const data = generateNormalData(150);
+                    return aleatory.vis.createDensityPlot(data, getConfig(), {
+                        title: 'Kernel Density Estimation',
+                        fill: true,
+                        xlab: 'Value',
+                        ylab: 'Density'
+                    });
+                },
+                code: `const data = aleatory.rnorm(150);
+const fig = aleatory.vis.createDensityPlot(data, config, {
+  fill: true
+});
+Plotly.newPlot('plot', fig.data, fig.layout);`
+            },
+            {
+                title: 'Distribution Functions',
+                generator: () => {
+                    return aleatory.vis.createDistributionPlot(aleatory.dnorm, getConfig(), {
+                        title: 'Normal PDF Comparison',
+                        xMin: -5,
+                        xMax: 5,
+                        params: [0, 1],
+                        name: 'Standard Normal',
+                        xlab: 'x',
+                        ylab: 'Density'
+                    });
+                },
+                code: `const fig = aleatory.vis.createDistributionPlot(
+  aleatory.dnorm,
+  config,
+  { xMin: -5, xMax: 5, params: [0, 1] }
+);
+Plotly.newPlot('plot', fig.data, fig.layout);`
+            }
+        ];
+
+        function createPlotCard(plot, index) {
+            const card = document.createElement('div');
+            card.className = 'plot-card';
+            card.innerHTML = `
+                <div class="plot-title">${plot.title}</div>
+                <div class="plot-container" id="plot-${index}"></div>
+                <details>
+                    <summary style="cursor: pointer; margin-top: 10px; font-weight: 600; color: #667eea;">Show Code</summary>
+                    <div class="code-snippet">${plot.code}</div>
+                </details>
+            `;
+            return card;
+        }
+
+        function renderPlot(plot, index) {
+            try {
+                const fig = plot.generator();
+                Plotly.newPlot(`plot-${index}`, fig.data, fig.layout, {
+                    responsive: true,
+                    displayModeBar: true,
+                    displaylogo: false,
+                    modeBarButtonsToRemove: ['lasso2d', 'select2d']
+                });
+            } catch (error) {
+                console.error(`Error rendering plot ${index}:`, error);
+                document.getElementById(`plot-${index}`).innerHTML = `
+                    <div style="color: red; padding: 20px;">
+                        Error: ${error.message}
+                    </div>
+                `;
+            }
+        }
+
+        window.regenerateAll = function() {
+            plots.forEach((plot, index) => renderPlot(plot, index));
+        };
+
+        window.exportAll = function() {
+            plots.forEach((plot, index) => {
+                Plotly.downloadImage(`plot-${index}`, {
+                    format: 'svg',
+                    filename: `aleatory_${plot.title.toLowerCase().replace(/\s+/g, '_')}`
+                });
+            });
+        };
+
+        // Initial render
+        const gallery = document.getElementById('gallery');
+        plots.forEach((plot, index) => {
+            gallery.appendChild(createPlotCard(plot, index));
+        });
+        regenerateAll();
+    </script>
+</body>
+</html>

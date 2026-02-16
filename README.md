@@ -8,16 +8,16 @@
 
 ---
 
-## 📦 Current Status: Phase 4 COMPLETE! 🎉
+## 📦 Current Status: Phase 5 - Visualization! 🎨
 
-Aleatory has successfully completed **Phase 4: Data Manipulation**! Now featuring a full-powered DataFrame with tidyverse-style operations, window functions, and seamless integration with statistical models.
+Aleatory now features a **comprehensive visualization module** with beautiful, publication-quality charts for every statistical feature!
 
 ### ✅ Implemented
 
 **Core Objects**
 - `Vector` – numeric vectors with NA support
 - `Factor` – categorical data with levels
-- `DataFrame` – tabular data structure with R/tidyverse-style operations ✨ NEW!
+- `DataFrame` – tabular data structure with R/tidyverse-style operations
 
 **Base Functions**
 - `summary()` – R-style summaries for Vector and Factor
@@ -67,7 +67,7 @@ All distributions follow R's standard interface with `lower_tail`, `log`, and `l
 - `summaryLM()` / `summaryGLM()` – R-style model summaries
 - `printModelSummary()` – formatted summary output with significance codes
 
-**DataFrame Operations** ✨ NEW!
+**DataFrame Operations**
 - `DataFrame` – column-oriented tabular data structure
 - `select()` – select columns
 - `filter()` – filter rows by condition
@@ -79,7 +79,7 @@ All distributions follow R's standard interface with `lower_tail`, `log`, and `l
 - `head()` / `tail()` – preview data
 - `slice()` – subset by row indices
 
-**Window Functions** ✨ NEW!
+**Window Functions**
 - `row_number()` – row numbers within groups
 - `rank()` – ranking with tie handling
 - `lag()` / `lead()` – access previous/next values
@@ -88,27 +88,92 @@ All distributions follow R's standard interface with `lower_tail`, `log`, and `l
 - `first()` / `last()` – first/last value in groups
 - All support partitioning for grouped operations
 
-**Data Reshaping** ✨ NEW!
+**Data Reshaping**
 - `pivotLonger()` / `pivotWider()` – reshape data
 - `separate()` / `unite()` – split/combine columns
 - `dropNA()` / `fillNA()` – handle missing data
 
-**Data Joins** ✨ NEW!
+**Data Joins**
 - `innerJoin()`, `leftJoin()`, `rightJoin()`, `fullJoin()`
 - `semiJoin()`, `antiJoin()` – filtering joins
 - `bindRows()`, `bindCols()` – combine DataFrames
 
-**Data I/O** ✨ NEW!
+**Data I/O**
 - `readCSV()` / `writeCSV()` – CSV import/export
 - `readJSON()` / `writeJSON()` – JSON import/export
 
-**Functional Composition** ✨ NEW!
+**Functional Composition**
 - `pipe()` – functional composition of operations
 - `chain()` – method chaining wrapper
+
+**Visualization Module** ✨ NEW!
+- `createHistogram()` – histograms with density overlays
+- `createDensityPlot()` – kernel density estimation
+- `createQQPlot()` – Q-Q plots for normality assessment
+- `createDistributionPlot()` – distribution function plots
+- `createScatterPlot()` – scatter plots with regression lines
+- `createResidualsPlot()` – residuals vs fitted diagnostic plots
+- `createFittedPlot()` – observed vs fitted plots
+- `createLeveragePlot()` – Cook's distance and leverage plots
+- `createBoxPlot()` – box plots for categorical comparisons
+- `createViolinPlot()` – violin plots with density
+- `createBarPlot()` – bar plots
+- `createHeatmap()` – heatmaps for matrix data
+- `createCorrelationMatrix()` – correlation matrix heatmaps
+- **6 Built-in Themes**: default, dark, minimal, colorblind, publication, ggplot2
+- **Full Customization**: colors, fonts, sizes, scales, interactions
+- **Export-ready**: SVG, PNG with configurable DPI
 
 ---
 
 ## 🚀 Installation & Usage
+
+### Using CDN (Recommended for Web)
+
+Include Aleatory in any webpage using the CDN:
+
+```html
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>My Aleatory Project</title>
+    <!-- Include Plotly.js for visualization -->
+    <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
+    <!-- Include Aleatory from your custom domain -->
+    <script src="https://aleatory.marcojorgensen.com/dist/aleatory.min.js"></script>
+</head>
+<body>
+    <div id="plot"></div>
+    
+    <script>
+        // Aleatory is now available globally
+        const data = aleatory.rnorm(100);
+        const config = aleatory.vis.applyTheme('publication');
+        const fig = aleatory.vis.createHistogram(data, config, {
+            showDensity: true,
+            showNormal: true
+        });
+        Plotly.newPlot('plot', fig.data, fig.layout);
+    </script>
+</body>
+</html>
+```
+
+### ES Module Import
+
+```html
+<script type="module">
+    import * as aleatory from 'https://aleatory.marcojorgensen.com/src/index.js';
+    
+    const x = [1, 2, 3, 4, 5];
+    const y = [2, 4, 5, 4, 5];
+    const fit = aleatory.lm(y, [x]);
+    console.log('R² =', fit.r_squared);
+</script>
+```
+
+### Local Development
 
 ```bash
 git clone https://github.com/MarcoJ03rgensen/aleatory
@@ -121,8 +186,11 @@ npm install  # (no dependencies yet)
 ```bash
 npm run dev
 
-# Or try the new DataFrame demo!
-node examples/dataframe_demo.js
+# Or try the new visualization gallery!
+open examples/visualization_gallery.html
+
+# Or run the Node.js vis demo
+node examples/vis_demo.js
 ```
 
 ### Run Tests
@@ -136,6 +204,68 @@ Golden-fixture tests validate against reference values from **R 4.3.0**.
 ---
 
 ## 📚 Quick Examples
+
+### Visualization Examples
+
+```javascript
+import * as aleatory from 'aleatory';
+
+// Generate sample data
+const data = aleatory.rnorm(200, { mean: 0, sd: 1 });
+
+// Create themed configuration
+const config = aleatory.vis.applyTheme('publication');
+
+// Histogram with density overlay
+const histFig = aleatory.vis.createHistogram(data, config, {
+  title: 'Normal Distribution',
+  showDensity: true,
+  showNormal: true,
+  xlab: 'Value',
+  ylab: 'Density'
+});
+Plotly.newPlot('plot1', histFig.data, histFig.layout);
+
+// Q-Q plot for normality assessment
+const qqFig = aleatory.vis.createQQPlot(data, config);
+Plotly.newPlot('plot2', qqFig.data, qqFig.layout);
+
+// Regression with diagnostics
+const x = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
+const y = [2.1, 3.9, 6.2, 7.8, 10.1, 11.9, 14.2, 15.8, 18.1, 19.9];
+const fit = aleatory.lm(y, [x]);
+
+// Scatter plot with regression line
+const scatterFig = aleatory.vis.createScatterPlot({ x, y }, config, {
+  fit: fit,
+  title: 'Linear Regression',
+  xlab: 'X',
+  ylab: 'Y'
+});
+Plotly.newPlot('plot3', scatterFig.data, scatterFig.layout);
+
+// Residuals diagnostic plot
+const residualsFig = aleatory.vis.createResidualsPlot(fit, config, {
+  showSmooth: true
+});
+Plotly.newPlot('plot4', residualsFig.data, residualsFig.layout);
+
+// Custom theme
+const customTheme = aleatory.vis.createTheme({
+  colors: {
+    primary: '#FF6B6B',
+    secondary: '#4ECDC4',
+    background: '#F7FFF7'
+  },
+  lineWidth: 3,
+  markerSize: 8
+});
+
+const customFig = aleatory.vis.createDensityPlot(data, customTheme, {
+  fill: true
+});
+Plotly.newPlot('plot5', customFig.data, customFig.layout);
+```
 
 ### DataFrame Operations
 
@@ -164,59 +294,14 @@ console.log(filtered.toString());
 // Diana          28.00          55000.00
 // Bob            30.00          60000.00
 
-// Method chaining
-const result = chain(df)
-  .filter(row => row.salary > 50000)
-  .mutate({
-    salary_k: row => row.salary / 1000
-  })
-  .groupBy('dept')
-  .value()
-  .summarize({
-    avg_salary: gdf => {
-      const salaries = gdf.colArray('salary');
-      return salaries.reduce((a, b) => a + b) / salaries.length;
-    }
-  });
-
-// Functional composition
-const addBonus = df => df.mutate({ bonus: row => row.salary * 0.1 });
-const filterSenior = df => df.filter(row => row.age >= 30);
-
-const seniorWithBonus = pipe(df, filterSenior, addBonus);
-```
-
-### Window Functions
-
-```javascript
-import { DataFrame, lag, lead, cumsum, rank } from 'aleatory';
-
-const timeSeries = new DataFrame({
-  date: ['2024-01', '2024-02', '2024-03', '2024-04'],
-  value: [100, 120, 115, 130]
+// Visualize grouped data
+const boxFig = aleatory.vis.createBoxPlot(df, config, {
+  groupBy: 'dept',
+  y: 'salary',
+  title: 'Salary by Department',
+  showMean: true
 });
-
-// Add window function columns
-const withWindows = timeSeries.mutate({
-  previous: () => lag(timeSeries, 'value', 1, null),
-  next: () => lead(timeSeries, 'value', 1, null),
-  running_total: () => cumsum(timeSeries, 'value'),
-  rank: () => rank(timeSeries, 'value', [], true) // decreasing
-});
-
-console.log(withWindows.toString());
-
-// Grouped window functions
-const sales = new DataFrame({
-  product: ['A', 'A', 'B', 'B'],
-  month: [1, 2, 1, 2],
-  revenue: [100, 120, 80, 95]
-});
-
-const ranked = sales.mutate({
-  rank_in_product: () => rank(sales, 'revenue', ['product'], true),
-  cumulative: () => cumsum(sales, 'revenue', ['product'])
-});
+Plotly.newPlot('plot', boxFig.data, boxFig.layout);
 ```
 
 ### Distribution Functions
@@ -230,15 +315,14 @@ pnorm(1.96);                     // 0.975 (P(Z ≤ 1.96))
 qnorm(0.975);                    // 1.96 (97.5th percentile)
 const samples = rnorm(100, { mean: 10, sd: 2 });
 
-// Binomial distribution
-dbinom(3, 10, 0.5);              // P(X = 3) for n=10, p=0.5
-pbinom(5, 10, 0.5);              // P(X ≤ 5)
-const coin_flips = rbinom(100, 10, 0.5);
-
-// Poisson distribution
-dpois(5, 3.5);                   // P(X = 5) for λ=3.5
-ppois(7, 3.5);                   // P(X ≤ 7)
-const events = rpois(100, 3.5);
+// Visualize distribution
+const distFig = aleatory.vis.createDistributionPlot(aleatory.dnorm, config, {
+  xMin: -4,
+  xMax: 4,
+  params: [0, 1],
+  title: 'Standard Normal Distribution'
+});
+Plotly.newPlot('plot', distFig.data, distFig.layout);
 ```
 
 ### Statistical Tests
@@ -258,10 +342,6 @@ console.log(result);
 //   conf_int: [9.23, 15.17],
 //   ...
 // }
-
-// Two-sample test
-const y = [8, 9, 10, 11, 12];
-const result2 = t_test(x, y);  // Welch's t-test
 ```
 
 ### Linear Regression
@@ -278,57 +358,37 @@ console.log(fit.coefficients);      // [intercept, slope]
 console.log(fit.r_squared);         // R²
 console.log(fit.p_values);          // p-values for coefficients
 
-// Use with DataFrame
-const df = new DataFrame({ x, y });
-const X = df.colArray('x');
-const Y = df.colArray('y');
-const model = lm(Y, [X]);
-
-// Add predictions back to DataFrame
-const withPred = df.mutate({
-  predicted: model.fitted_values,
-  residual: model.residuals
-});
-
-// ANOVA table
-const aov = anova(fit);
-console.log(aov.table);             // ANOVA decomposition
-
-// Multiple regression
-const x1 = [1, 2, 3, 4, 5];
-const x2 = [2, 3, 4, 5, 6];
-const y2 = [10, 12, 15, 18, 20];
-const fit2 = lm(y2, [x1, x2]);
+// Comprehensive diagnostic plots
+const diag = aleatory.diagnostics(fit);
+const leverageFig = aleatory.vis.createLeveragePlot(diag, config);
+Plotly.newPlot('plot', leverageFig.data, leverageFig.layout);
 ```
 
-### Generalized Linear Models
+---
+
+## 🎨 Visualization Themes
+
+Aleatory includes 6 professional themes:
+
+- **default** – Modern, colorful (default)
+- **dark** – Dark background with vibrant colors
+- **minimal** – Clean, monochromatic
+- **colorblind** – ColorBrewer colorblind-safe palette
+- **publication** – Nature/Science journal style
+- **ggplot2** – R ggplot2 aesthetic
 
 ```javascript
-import { glm, predictGlm, binomial, poisson, DataFrame } from 'aleatory';
+// Use a built-in theme
+const config = aleatory.vis.applyTheme('publication');
 
-// Logistic regression
-const creditData = new DataFrame({
-  income: [30, 45, 60, 75, 90, 105, 120, 135],
-  debt: [0.8, 0.7, 0.6, 0.5, 0.4, 0.3, 0.2, 0.1],
-  approved: [0, 0, 0, 0, 1, 1, 1, 1]
+// Or create a custom theme
+const customConfig = aleatory.vis.createTheme({
+  width: 1200,
+  height: 800,
+  colors: { primary: '#FF5733', secondary: '#33FF57' },
+  fonts: { title: { size: 24 } },
+  lineWidth: 3
 });
-
-const X = [creditData.colArray('income'), creditData.colArray('debt')];
-const y = creditData.colArray('approved');
-
-const logit_fit = glm(y, X, { family: binomial() });
-
-console.log(logit_fit.coefficients);    // [intercept, income, debt]
-console.log(logit_fit.deviance);        // residual deviance
-console.log(logit_fit.aic);             // AIC
-
-// Predict probabilities
-const x_new = [[50, 70, 90], [0.6, 0.4, 0.3]];
-const probs = predictGlm(logit_fit, x_new, 'response');
-
-// Poisson regression (count data)
-const counts = [2, 3, 5, 8, 13];
-const pois_fit = glm(counts, [x.slice(0, 5)], { family: poisson() });
 ```
 
 ---
@@ -343,8 +403,8 @@ const pois_fit = glm(counts, [x.slice(0, 5)], { family: poisson() });
 - `tests/models/anova.test.js` – ANOVA tables and model comparison
 - `tests/models/glm.test.js` – Generalized linear models
 - `tests/models/diagnostics.test.js` – Model diagnostics and intervals
-- `tests/data/dataframe.test.js` – DataFrame operations ✨ NEW!
-- `tests/data/window.test.js` – Window functions ✨ NEW!
+- `tests/data/dataframe.test.js` – DataFrame operations
+- `tests/data/window.test.js` – Window functions
 
 Tolerance: `1e-6` for most computations.
 
@@ -367,7 +427,7 @@ Tolerance: `1e-6` for most computations.
 - [x] Model diagnostics and summaries
 - [x] Confidence/prediction intervals
 
-### ✅ Phase 4: Data Manipulation (COMPLETE) 🎉
+### ✅ Phase 4: Data Manipulation (COMPLETE)
 - [x] DataFrame object
 - [x] tidyverse-style operations (filter, mutate, group_by, summarize)
 - [x] Window functions (lag, lead, rank, cumsum, etc.)
@@ -376,7 +436,19 @@ Tolerance: `1e-6` for most computations.
 - [x] Data import/export (CSV, JSON)
 - [x] Method chaining and functional composition
 
-### Phase 5: Additional Distributions (NEXT)
+### ✅ Phase 5: Visualization (IN PROGRESS) 🎨
+- [x] Core visualization infrastructure
+- [x] Distribution plots (histogram, density, Q-Q)
+- [x] Regression diagnostics (scatter, residuals, leverage)
+- [x] Categorical plots (box, violin, bar)
+- [x] Matrix visualizations (heatmap, correlation)
+- [x] Theme system (6 built-in themes)
+- [x] Interactive gallery
+- [ ] Additional plot types (pair plots, forest plots)
+- [ ] Animation support
+- [ ] 3D visualizations
+
+### Phase 6: Additional Distributions (NEXT)
 - [ ] Exponential distribution
 - [ ] Gamma distribution
 - [ ] Beta distribution
@@ -414,6 +486,8 @@ MIT License – see [LICENSE](LICENSE) for details.
 ## 🔗 Links
 
 - **Repository**: [github.com/MarcoJ03rgensen/aleatory](https://github.com/MarcoJ03rgensen/aleatory)
+- **CDN**: [aleatory.marcojorgensen.com](https://aleatory.marcojorgensen.com)
+- **Visualization Gallery**: [aleatory.marcojorgensen.com/examples/visualization_gallery.html](https://aleatory.marcojorgensen.com/examples/visualization_gallery.html)
 - **Author**: Marco Birkedahl Jørgensen
 - **CI/CD**: Automated testing on Node.js 18.x, 20.x, 22.x
 
