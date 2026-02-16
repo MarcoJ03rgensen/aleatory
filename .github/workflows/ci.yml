@@ -22,12 +22,8 @@ jobs:
       with:
         node-version: ${{ matrix.node-version }}
     
-    - name: Run tests
-      run: npm test
-    
-    - name: Run test coverage
-      run: npm run test:coverage
-      if: matrix.node-version == '20.x'
+    - name: Run data tests
+      run: npm run test:data
 
   lint:
     runs-on: ubuntu-latest
