@@ -38,7 +38,7 @@ export function df(x, df1, df2, { log = false } = {}) {
     const half_d2 = d2 / 2;
     const half_sum = (d1 + d2) / 2;
     
-    const logDens = half_d1 * Math.log(d1) + half_d1 * Math.log(xi)
+    const logDens = half_d1 * Math.log(d1) + (half_d1 - 1) * Math.log(xi)
                   - half_d1 * Math.log(d2)
                   + lgamma(half_sum)
                   - lgamma(half_d1) - lgamma(half_d2)
@@ -114,34 +114,56 @@ export function qf(p, df1, df2, { lower_tail = true, log_p = false } = {}) {
     if (prob === 0) return 0;
     if (prob === 1) return Infinity;
     
-    // Initial guess using mean and variance
-    let x;
-    if (df2 > 4) {
-      const mean = df2 / (df2 - 2);
-      const variance = 2 * df2 * df2 * (df1 + df2 - 2) / (df1 * (df2 - 2) * (df2 - 2) * (df2 - 4));
-      x = mean + Math.sqrt(variance) * (prob - 0.5) * 2;
-      x = Math.max(0.01, x);
-    } else {
-      x = 1;
+    // Robust initial guess using exponential bracketing on the CDF
+    let xLow = 0.0;
+    let xHigh = Math.max(1, df2 / Math.max(1, df1));
+
+    // Expand xHigh until it brackets the desired probability
+    let cdfHigh = pf(xHigh, df1, df2);
+    let expandCount = 0;
+    while (cdfHigh < prob && expandCount < 100) {
+      xHigh *= 2;
+      cdfHigh = pf(xHigh, df1, df2);
+      expandCount++;
     }
-    
-    // Newton-Raphson refinement
+
+    // Fall back to a safe value if we couldn't bracket
+    if (cdfHigh < prob) {
+      xHigh = Math.max(xHigh, 1e6);
+    }
+
+    // Start at midpoint of bracket
+    let x = (xLow + xHigh) / 2;
+
+    // Newton-Raphson refinement with guarded steps
     const maxIter = 50;
     const tol = 1e-12;
-    
+
     for (let i = 0; i < maxIter; i++) {
       const cdf = pf(x, df1, df2);
       const pdf = df(x, df1, df2);
-      
-      if (pdf === 0 || !isFinite(pdf)) break;
-      
+
+      if (!isFinite(cdf) || !isFinite(pdf) || pdf === 0) break;
+
       const delta = (cdf - prob) / pdf;
-      x = x - delta;
-      
-      if (x < 0) x = 0.001; // Keep positive
+
+      // Guarded update: don't step outside bracket
+      let xNew = x - delta;
+      if (xNew <= xLow || !isFinite(xNew)) xNew = (x + xLow) / 2;
+      if (xNew >= xHigh) xNew = (x + xHigh) / 2;
+
+      // Update bracket
+      if (cdf > prob) {
+        xHigh = x;
+      } else {
+        xLow = x;
+      }
+
+      x = xNew;
+      if (x < 0) x = 1e-8;
       if (Math.abs(delta) < tol * Math.abs(x)) break;
     }
-    
+
     return x;
   });
   

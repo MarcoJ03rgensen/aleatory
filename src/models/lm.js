@@ -8,6 +8,7 @@ import { Matrix } from '../math/matrix.js';
 import { leastSquares } from '../math/qr.js';
 import { pt, qt } from '../distributions/t.js';
 import { pf } from '../distributions/f.js';
+import { pseudoInverseSolve } from '../math/svd.js';
 
 /**
  * Fit a linear model using ordinary least squares
@@ -226,13 +227,20 @@ function calculateStandardErrors(X, sigma) {
   // Compute X'X
   const XtX = X.transpose().multiply(X);
   
-  // Invert using Cholesky or simple inversion for small matrices
-  // For now, use simple Gaussian elimination for diagonal extraction
-  const XtXinv = invertSmallMatrix(XtX);
-  
-  // Extract diagonal
-  for (let i = 0; i < p; i++) {
-    se[i] = sigma * Math.sqrt(Math.abs(XtXinv.get(i, i)));
+  // Attempt direct inversion; fall back to pseudoinverse column solves if singular
+  try {
+    const XtXinv = invertSmallMatrix(XtX);
+    for (let i = 0; i < p; i++) {
+      se[i] = sigma * Math.sqrt(Math.abs(XtXinv.get(i, i)));
+    }
+  } catch (e) {
+    // Singular XtX: compute diagonal of pseudo-inverse by solving XtX * x = e_i
+    for (let i = 0; i < p; i++) {
+      const ei = new Float64Array(p);
+      ei[i] = 1;
+      const col = pseudoInverseSolve(XtX, ei);
+      se[i] = sigma * Math.sqrt(Math.abs(col[i]));
+    }
   }
   
   return se;

@@ -88,7 +88,9 @@ export function betaIncomplete(x, a, b) {
   
   // Continued fraction evaluation (Lentz's algorithm)
   const logBeta = lbeta(a, b);
-  const front = Math.exp(a * Math.log(x) + b * Math.log(1 - x) - logBeta) / a;
+  // Use log1p for better precision when x is near 1
+  const logTerm = a * Math.log(x) + b * Math.log1p(-x) - logBeta;
+  const front = Math.exp(logTerm) / a;
   
   const cf = betaContinuedFraction(x, a, b);
   return front * cf;

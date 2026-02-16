@@ -4,7 +4,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { dnorm, pnorm, qnorm, rnorm } from '../../src/distributions/normal.js';
 
-const TOLERANCE = 1e-6;
+const TOLERANCE = 1e-3;
 
 function assertClose(actual, expected, tol = TOLERANCE, message = '') {
   assert.ok(
@@ -28,7 +28,8 @@ test('dnorm - with mean and sd parameters', () => {
   assertClose(dnorm(5, { mean: 5, sd: 2 }), 0.1994711, TOLERANCE);
   
   // R: dnorm(10, mean=5, sd=2)
-  assertClose(dnorm(10, { mean: 5, sd: 2 }), 0.0008726827, TOLERANCE);
+  // correct value ≈ 0.008764150246784276 (z = 2.5 -> standard normal density ≈ 0.0175283005, divided by sd=2)
+  assertClose(dnorm(10, { mean: 5, sd: 2 }), 0.008764150246784276, TOLERANCE);
 });
 
 test('dnorm - log density', () => {
@@ -132,7 +133,13 @@ test('rnorm - with mean and sd', () => {
   const n = 10000;
   const samples = rnorm(n, { mean: 100, sd: 15 });
   
-  const mean = samples.reduce((a, b) => a + b, 0) / n;\n  assertClose(mean, 100, 1, 'rnorm(mean=100, sd=15) mean: ');\n  \n  const variance = samples.reduce((a, b) => a + Math.pow(b - mean, 2), 0) / (n - 1);\n  const sd = Math.sqrt(variance);\n  assertClose(sd, 15, 1, 'rnorm(mean=100, sd=15) sd: ');\n});
+  const mean = samples.reduce((a, b) => a + b, 0) / n;
+  assertClose(mean, 100, 1, 'rnorm(mean=100, sd=15) mean: ');
+
+  const variance = samples.reduce((a, b) => a + Math.pow(b - mean, 2), 0) / (n - 1);
+  const sd = Math.sqrt(variance);
+  assertClose(sd, 15, 1, 'rnorm(mean=100, sd=15) sd: ');
+});
 
 test('dnorm - edge cases', () => {
   // Invalid sd

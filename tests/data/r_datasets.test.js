@@ -2,6 +2,7 @@
  * Tests for R dataset compatibility module
  */
 
+import { describe, it } from 'node:test';
 import { strict as assert } from 'assert';
 import { readRDataset, writeRDataset, detectRFormat, convertRType, RDatasets } from '../../src/data/r_datasets.js';
 import Factor from '../../src/core/Factor.js';

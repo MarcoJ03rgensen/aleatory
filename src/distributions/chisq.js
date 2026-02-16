@@ -1,6 +1,7 @@
 // Chi-squared distribution functions
 
 import { lgamma, gammaIncomplete } from '../math/special.js';
+import { qnorm } from './normal.js';
 
 /**
  * Chi-squared probability density function
@@ -167,28 +168,7 @@ function formatProb(p, lower_tail, log_p) {
 
 // Wilson-Hilferty normal approximation for initial guess
 function wilsonHilfertyApprox(p, df) {
-  const z = qnormApprox(p);
+  const z = qnorm(p);
   const wh = 1 - 2/(9*df) + z * Math.sqrt(2/(9*df));
   return df * wh * wh * wh;
-}
-
-function qnormApprox(p) {
-  const q = p - 0.5;
-  
-  if (Math.abs(q) <= 0.42) {
-    const r = q * q;
-    return q * ((((-25.44106049637 * r + 41.39119773534) * r
-      - 18.61500062529) * r + 2.50662823884) * r) /
-      ((((3.13082909833 * r - 21.06224101826) * r
-      + 23.08336743743) * r - 8.47351093090) * r + 1.0);
-  } else {
-    let r = p < 0.5 ? p : 1 - p;
-    r = Math.sqrt(-Math.log(r));
-    
-    const z = (((2.32121276858 * r + 4.85014127135) * r
-      - 2.29796479134) * r - 2.78718931138) /
-      ((1.63706781897 * r + 3.54388924762) * r + 1.0);
-    
-    return p < 0.5 ? -z : z;
-  }
 }

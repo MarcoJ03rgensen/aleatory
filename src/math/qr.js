@@ -4,6 +4,7 @@
  */
 
 import { Matrix, dot, norm, scale, subtract } from './matrix.js';
+import { pseudoInverseSolve } from './svd.js';
 
 /**
  * QR decomposition of matrix A
@@ -35,17 +36,20 @@ export function qr(A) {
     const normX = norm(x);
     if (Math.abs(normX) < 1e-14) continue; // Skip if column is zero
     
-    const s = x[0] >= 0 ? -1 : 1;
-    const u1 = x[0] - s * normX;
-    
-    // Householder vector v
+    // Stable Householder vector construction
+    // Choose sign to avoid cancellation: v = x + sign(x0)*||x||*e1
+    const s = x[0] >= 0 ? 1 : -1;
     const v = new Float64Array(m - k);
-    v[0] = 1;
+    v[0] = x[0] + s * normX;
     for (let i = 1; i < m - k; i++) {
-      v[i] = x[i] / u1;
+      v[i] = x[i];
     }
-    
-    const beta = 2 / dot(v, v);
+
+    // If v is effectively zero, skip
+    const vnorm2 = dot(v, v);
+    if (Math.abs(vnorm2) < 1e-20) continue;
+
+    const beta = 2 / vnorm2;
     
     // Apply Householder reflection to R (columns k to n-1)
     for (let j = k; j < n; j++) {
@@ -138,10 +142,14 @@ export function leastSquares(A, b) {
   
   // QR decomposition: A = QR
   const { Q, R } = qr(A);
-  
-  // Solve Rx = Q'b
-  const Qt = Q.transpose();
-  const Qtb = Qt.multiplyVector(b);
-  
-  return backsolve(R, Qtb);
+
+  // Solve Rx = Q'b (attempt)
+  try {
+    const Qt = Q.transpose();
+    const Qtb = Qt.multiplyVector(b);
+    return backsolve(R, Qtb);
+  } catch (e) {
+    // Fallback to pseudoinverse-based least-norm solution for rank-deficient cases
+    return pseudoInverseSolve(A, b);
+  }
 }

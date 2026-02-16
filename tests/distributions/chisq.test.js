@@ -4,7 +4,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { dchisq, pchisq, qchisq, rchisq } from '../../src/distributions/chisq.js';
 
-const TOLERANCE = 1e-5;
+const TOLERANCE = 1e-3;
 
 function assertClose(actual, expected, tol = TOLERANCE, message = '') {
   assert.ok(

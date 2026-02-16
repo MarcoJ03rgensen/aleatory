@@ -63,6 +63,12 @@ export default class Factor {
     return this.levels.length;
   }
 
+  toArray() {
+    const out = new Array(this.length);
+    for (let i = 0; i < this.length; i++) out[i] = this.get(i);
+    return out;
+  }
+
   toString() {
     return `Factor(${this.length}) with ${this.nlevels()} levels`;
   }

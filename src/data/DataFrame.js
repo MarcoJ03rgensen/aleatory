@@ -19,15 +19,19 @@ export default class DataFrame {
     this._columns = new Map();
     this._rowNames = options.rowNames || null;
     this._nrows = 0;
-    
+
+    const getLen = v => Array.isArray(v) ? v.length : (v && typeof v.length === 'number' ? v.length : (v && typeof v.length === 'function' ? v.length() : undefined));
+
     // Initialize from data object
     const entries = Object.entries(data);
-    
+
     if (entries.length > 0) {
-      // Determine number of rows from first column
+      // Determine number of rows from first column (supports Array, Vector, Factor)
       const firstCol = entries[0][1];
-      this._nrows = Array.isArray(firstCol) ? firstCol.length : firstCol.length();
-      
+      const len = getLen(firstCol);
+      if (len === undefined) throw new Error('Unable to determine number of rows from first column');
+      this._nrows = len;
+
       // Add each column
       for (const [name, values] of entries) {
         this.addColumn(name, values);
@@ -74,49 +78,40 @@ export default class DataFrame {
     if (values instanceof Vector || values instanceof Factor) {
       col = values;
     } else if (Array.isArray(values)) {
-      // Try to detect if it should be a Factor
-      // Filter out null/undefined to check values
+      // Normalize non-null values for heuristics
       const validValues = values.filter(v => v !== null && v !== undefined);
-      const uniqueCount = new Set(validValues).size;
-      
-      // Heuristic for factor: low cardinality relative to length, and not empty
-      if (uniqueCount <= Math.min(10, values.length / 2) && uniqueCount > 0) {
-        // Looks categorical
-        col = new Factor(values);
+      const hasValid = validValues.length > 0;
+
+      // If all non-null values are numeric, prefer a numeric Vector regardless of cardinality
+      const allNumeric = hasValid && validValues.every(v => typeof v === 'number');
+      if (allNumeric) {
+        col = new Vector(values, 'numeric');
       } else {
-        // Check if numeric
-        const isNumeric = validValues.every(v => typeof v === 'number');
-        col = new Vector(values, isNumeric ? 'numeric' : 'string');
+        // Heuristic for Factor: low cardinality for non-numeric (categorical) values
+        const uniqueCount = new Set(validValues).size;
+        if (uniqueCount > 0 && uniqueCount <= Math.min(10, values.length / 2)) {
+          col = new Factor(values);
+        } else {
+          // Fallback: treat as numeric only if all valid values are numbers, otherwise string
+          const isNumeric = hasValid && validValues.every(v => typeof v === 'number');
+          col = new Vector(values, isNumeric ? 'numeric' : 'string');
+        }
       }
     } else {
       throw new Error('Column values must be an Array, Vector, or Factor');
     }
     
-    // Check length
+    const getLen = v => Array.isArray(v) ? v.length : (v && typeof v.length === 'number' ? v.length : (v && typeof v.length === 'function' ? v.length() : undefined));
+
+    const colLen = getLen(col);
+    if (colLen === undefined) {
+      throw new Error('Unable to determine column length');
+    }
+
     if (this._nrows === 0) {
-      this._nrows = col.length; // Vector/Factor expose .length property now? No, .length property on instance? 
-      // Vector uses .length property. Factor uses .length property? 
-      // Let's check Factor.js later, but assume standard interface
-    } else if (col.length !== this._nrows && col.length() !== this._nrows) {
-       // Vector has .length property AND .length() method in my update? 
-       // No, Vector has .length property. Factor usually has .length property too.
-       // But old code used .length() method call.
-       // Vector.js has `get length()`? No, it sets `this.length = ...` in constructor.
-       // It does NOT have `length()` method in my updated Vector.js!
-       // Wait, did previous Vector.js have `length()` method?
-       // Inspecting previous Vector.js (cite:37): It did NOT have length() method!
-       // But DataFrame.js (cite:36) used `col.length()` in `addColumn`!!
-       // "else if (col.length() !== this._nrows)"
-       // "this._nrows = Array.isArray(firstCol) ? firstCol.length : firstCol.length();"
-       // THIS IS A BUG in original code if Vector didn't have length() method.
-       // But wait, `Vector` instances might have had `length` property.
-       // If `Vector` has `length` property, `col.length` works. `col.length()` throws "not a function".
-       // So original `DataFrame.js` was broken for Vectors? 
-       // Or `Vector` inherited from something? No.
-       // Let's assume Vector needs `length` property.
-       // I should probably add `length()` method to Vector to be safe, or fix DataFrame to use property.
-       // I'll fix DataFrame to use `.length` property if available, or method.
-      throw new Error(`Column length (${col.length}) does not match DataFrame rows (${this._nrows})`);
+      this._nrows = colLen;
+    } else if (colLen !== this._nrows) {
+      throw new Error(`Column length (${colLen}) does not match DataFrame rows (${this._nrows})`);
     }
     
     this._columns.set(name, col);
@@ -353,6 +348,27 @@ export default class DataFrame {
     return this.slice(indices);
   }
   
+  /**
+   * Expose underlying data in convenient forms
+   * - Factor columns are returned as Factor instances
+   * - Vector/numeric columns are returned as plain arrays
+   */
+  get data() {
+    const out = {};
+    for (const [name, col] of this._columns.entries()) {
+      if (col instanceof Factor) {
+        out[name] = col;
+      } else if (col && typeof col.toArray === 'function') {
+        out[name] = col.toArray();
+      } else if (Array.isArray(col)) {
+        out[name] = col.slice();
+      } else {
+        out[name] = col;
+      }
+    }
+    return out;
+  }
+
   /**
    * Convert DataFrame to array of row objects
    * @returns {Array<Object>}

@@ -1,7 +1,8 @@
 // Student's t-distribution functions
 // Uses exact implementations with beta function and Newton-Raphson for quantiles
 
-import { lbeta, betaIncomplete } from '../math/special.js';
+import { lbeta, betaIncomplete, lgamma } from '../math/special.js';
+import { qnorm } from './normal.js';
 
 /**
  * Student's t probability density function
@@ -20,9 +21,10 @@ export function dt(x, df, { log = false } = {}) {
     if (xi == null || isNaN(xi)) return NaN;
     
     // t density: Γ((ν+1)/2) / (√(νπ) Γ(ν/2)) * (1 + x²/ν)^(-(ν+1)/2)
-    // Using log-beta function for numerical stability
-    const logDens = -lbeta(0.5, df/2) - 0.5 * Math.log(df) 
-                    - (df + 1) / 2 * Math.log(1 + xi * xi / df);
+    // Compute using log-gamma for stability
+    const logDens = lgamma((df + 1) / 2) - lgamma(df / 2)
+            - 0.5 * Math.log(df * Math.PI)
+            - (df + 1) / 2 * Math.log(1 + xi * xi / df);
     
     return log ? logDens : Math.exp(logDens);
   });
@@ -102,11 +104,11 @@ export function qt(p, df, { lower_tail = true, log_p = false } = {}) {
     
     // For large df, t converges to normal
     if (df > 1e6) {
-      return qnormApprox(prob);
+      return qnorm(prob);
     }
     
     // Initial guess using normal approximation, but adjusted for df
-    let t = qnormApprox(prob);
+    let t = qnorm(prob);
     
     // Cornish-Fisher expansion for better initial guess
     if (df < 100) {
@@ -203,25 +205,4 @@ function formatProb(p, lower_tail, log_p) {
   return prob;
 }
 
-// Helper: quick normal quantile approximation for initial guess
-function qnormApprox(p) {
-  // Beasley-Springer-Moro approximation (simplified)
-  const q = p - 0.5;
-  
-  if (Math.abs(q) <= 0.42) {
-    const r = q * q;
-    return q * ((((-25.44106049637 * r + 41.39119773534) * r
-      - 18.61500062529) * r + 2.50662823884) * r) /
-      ((((3.13082909833 * r - 21.06224101826) * r
-      + 23.08336743743) * r - 8.47351093090) * r + 1.0);
-  } else {
-    let r = p < 0.5 ? p : 1 - p;
-    r = Math.sqrt(-Math.log(r));
-    
-    const z = (((2.32121276858 * r + 4.85014127135) * r
-      - 2.29796479134) * r - 2.78718931138) /
-      ((1.63706781897 * r + 3.54388924762) * r + 1.0);
-    
-    return p < 0.5 ? -z : z;
-  }
-}
+

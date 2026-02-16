@@ -59,49 +59,61 @@ export function readRDataset(input, options = {}) {
   // Handle row names (R exports with row names as first column by default)
   if (rowNames && df.ncol > 0) {
     const firstCol = df.names[0];
-    // Store row names as metadata if needed (for now just remove)
-    const rowNameValues = df.data[firstCol];
-    
-    // Remove the row names column
+    // Remove the row names column (we'll handle row-name values on the object form later if needed)
     const remainingCols = df.names.slice(1);
     df = df.select(...remainingCols);
   }
   
-  // Replace R NA strings with null throughout the dataset
+  // Work on plain object representation of the DataFrame so we can safely mutate/replace columns
+  let obj = df.toObject();
   const colNames = df.names;
+
+  // Replace R NA strings with null throughout the dataset
   for (const col of colNames) {
-    df.data[col] = df.data[col].map(val => {
+    obj[col] = obj[col].map(val => {
       if (val === null || val === undefined) return null;
       const strVal = String(val).trim();
       return naStrings.includes(strVal) ? null : val;
     });
   }
-  
-  // Convert specified columns to factors with explicit levels
-  for (const col of factorColumns) {
-    if (df.data[col]) {
-      const columnLevels = levels[col] || getUniqueLevels(df.data[col]);
-      df.data[col] = new Factor(df.data[col], { levels: columnLevels });
+
+  // Coerce columns that contain numeric-like strings to numbers (but do not override explicitly requested factors)
+  for (const col of colNames) {
+    if (factorColumns.includes(col)) continue; // respect explicit factor request
+
+    const arr = obj[col];
+    const nonNull = arr.filter(v => v !== null && v !== undefined);
+    if (nonNull.length === 0) continue;
+
+    const allNumericLike = nonNull.every(v => typeof v === 'number' || (typeof v === 'string' && v.trim() !== '' && !Number.isNaN(Number(v))));
+    if (allNumericLike) {
+      obj[col] = arr.map(v => (v === null || v === undefined) ? null : (typeof v === 'number' ? v : Number(String(v).trim())));
     }
   }
-  
-  // Auto-convert string columns to factors if requested (R's stringsAsFactors=TRUE)
+
+  // Convert specified columns to Factor instances
+  for (const col of factorColumns) {
+    if (obj[col]) {
+      const columnLevels = levels[col] || getUniqueLevels(obj[col]);
+      obj[col] = new Factor(obj[col], { levels: columnLevels });
+    }
+  }
+
+  // Auto-convert string columns to factors if requested
   if (stringsAsFactors) {
-    for (const col of colNames) {
-      if (factorColumns.includes(col)) continue; // Already handled
-      
-      const column = df.data[col];
+    for (const col of Object.keys(obj)) {
+      if (factorColumns.includes(col)) continue;
+      const column = obj[col];
       const sample = column.find(v => v !== null && v !== undefined);
-      
-      // Check if column is string-like and not already a Factor
-      if (sample && typeof sample === 'string' && !(column instanceof Factor)) {
+      if (sample && typeof sample === 'string') {
         const columnLevels = getUniqueLevels(column);
-        df.data[col] = new Factor(column, { levels: columnLevels });
+        obj[col] = new Factor(column, { levels: columnLevels });
       }
     }
   }
-  
-  return df;
+
+  // Rebuild DataFrame from the object (preserves Factor/Vector types)
+  return new DataFrame(obj);
 }
 
 /**

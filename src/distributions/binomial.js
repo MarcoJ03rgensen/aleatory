@@ -79,7 +79,10 @@ export function pbinom(q, size, prob, { lower_tail = true, log_p = false } = {})
     for (let i = 0; i <= k; i++) {
       cumProb += dbinom(i, size, prob);
     }
-    
+
+    // Clamp to [0,1] to avoid tiny round-off errors
+    cumProb = Math.min(1, Math.max(0, cumProb));
+
     return formatProb(cumProb, lower_tail, log_p);
   });
   

@@ -141,12 +141,14 @@ function performJoin(left, right, type, options) {
     result[newName] = [];
   }
   
-  // Add right columns
-  for (const [origName, newName] of rightColMap.entries()) {
-    result[newName] = [];
+  // Add right columns (skip for semi/anti joins — they only return left columns)
+  if (type !== 'semi' && type !== 'anti') {
+    for (const [origName, newName] of rightColMap.entries()) {
+      result[newName] = [];
+    }
   }
   
-  // Track which right rows were matched (for full join)
+  // Track which right rows were matched (for full/right join)
   const matchedRightRows = new Set();
   
   // Process left rows
@@ -157,11 +159,12 @@ function performJoin(left, right, type, options) {
     
     if (rightIndices.length === 0) {
       // No match in right
-      if (type === 'inner' || type === 'semi') {
-        continue; // Skip this row
+      if (type === 'inner' || type === 'semi' || type === 'right') {
+        // For inner/semi/right joins we skip unmatched left rows
+        continue;
       } else if (type === 'anti') {
-        // Anti join: include this row
-        addRow(result, joinKeys, leftRow, null, leftColMap, rightColMap);
+        // Anti join: include this left row only (no right columns)
+        addRow(result, joinKeys, leftRow, null, leftColMap, new Map());
       } else {
         // Left or full join: include with NAs for right
         addRow(result, joinKeys, leftRow, null, leftColMap, rightColMap);
