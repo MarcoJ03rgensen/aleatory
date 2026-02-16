@@ -8,6 +8,16 @@
 
 ---
 
+## 📖 Documentation
+
+- **[📚 Complete Tutorial](docs/COMPLETE_TUTORIAL.md)** - Step-by-step guide covering all features with examples and test datasets
+- **[🎨 Visualization Gallery](https://aleatory.marcojorgensen.com/examples/visualization_gallery.html)** - Interactive demo of all plot types
+- **[💻 Code Examples](examples/)** - Runnable demos for each module
+
+**New to Aleatory?** Start with the [Complete Tutorial](docs/COMPLETE_TUTORIAL.md) for a comprehensive introduction from basics to advanced topics.
+
+---
+
 ## 📦 Current Status: Phase 5 - Visualization! 🎨
 
 Aleatory now features a **comprehensive visualization module** with beautiful, publication-quality charts for every statistical feature!
@@ -101,6 +111,8 @@ All distributions follow R's standard interface with `lower_tail`, `log`, and `l
 **Data I/O**
 - `readCSV()` / `writeCSV()` – CSV import/export
 - `readJSON()` / `writeJSON()` – JSON import/export
+- `readRDataset()` / `writeRDataset()` – R-compatible CSV with NA support
+- `RDatasets` – Built-in R datasets (mtcars, iris, etc.)
 
 **Functional Composition**
 - `pipe()` – functional composition of operations
@@ -123,6 +135,40 @@ All distributions follow R's standard interface with `lower_tail`, `log`, and `l
 - **6 Built-in Themes**: default, dark, minimal, colorblind, publication, ggplot2
 - **Full Customization**: colors, fonts, sizes, scales, interactions
 - **Export-ready**: SVG, PNG with configurable DPI
+
+---
+
+## 🚀 Quick Start
+
+### 30-Second Demo
+
+```html
+<!DOCTYPE html>
+<html>
+<head>
+    <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
+    <script src="https://aleatory.marcojorgensen.com/dist/aleatory.min.js"></script>
+</head>
+<body>
+    <div id="plot"></div>
+    <script>
+        // Generate data and create visualization in 5 lines
+        const x = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
+        const y = [2, 4, 5, 4, 5, 7, 8, 7, 9, 10];
+        const fit = aleatory.lm(y, [x]);
+        const fig = aleatory.vis.createScatterPlot({x, y}, aleatory.vis.applyTheme('publication'), {fit});
+        Plotly.newPlot('plot', fig.data, fig.layout);
+    </script>
+</body>
+</html>
+```
+
+### Learn More
+
+For detailed explanations and comprehensive examples:
+- **[📚 Complete Tutorial](docs/COMPLETE_TUTORIAL.md)** - Start here for step-by-step learning
+- **[🎨 Visualization Gallery](https://aleatory.marcojorgensen.com/examples/visualization_gallery.html)** - See all plot types
+- **Examples below** - Quick reference for common tasks
 
 ---
 
@@ -364,6 +410,22 @@ const leverageFig = aleatory.vis.createLeveragePlot(diag, config);
 Plotly.newPlot('plot', leverageFig.data, leverageFig.layout);
 ```
 
+### R Dataset Compatibility
+
+```javascript
+import { RDatasets, readRDataset, writeRDataset } from 'aleatory';
+
+// Use built-in R datasets
+const mtcars = RDatasets.mtcars();
+console.log('Average MPG:', mtcars.col('mpg').mean());
+
+// Read R-formatted CSV (handles NA, factors, etc.)
+const data = readRDataset('path/to/data.csv');
+
+// Write R-compatible format
+writeRDataset(myDataFrame, 'output.csv');
+```
+
 ---
 
 ## 🎨 Visualization Themes
@@ -405,6 +467,7 @@ const customConfig = aleatory.vis.createTheme({
 - `tests/models/diagnostics.test.js` – Model diagnostics and intervals
 - `tests/data/dataframe.test.js` – DataFrame operations
 - `tests/data/window.test.js` – Window functions
+- `tests/data/r_datasets.test.js` – R dataset compatibility
 
 Tolerance: `1e-6` for most computations.
 
@@ -435,6 +498,7 @@ Tolerance: `1e-6` for most computations.
 - [x] Data joins (inner, left, right, full, semi, anti)
 - [x] Data import/export (CSV, JSON)
 - [x] Method chaining and functional composition
+- [x] R dataset compatibility
 
 ### ✅ Phase 5: Visualization (IN PROGRESS) 🎨
 - [x] Core visualization infrastructure
@@ -486,6 +550,7 @@ MIT License – see [LICENSE](LICENSE) for details.
 ## 🔗 Links
 
 - **Repository**: [github.com/MarcoJ03rgensen/aleatory](https://github.com/MarcoJ03rgensen/aleatory)
+- **Complete Tutorial**: [docs/COMPLETE_TUTORIAL.md](docs/COMPLETE_TUTORIAL.md)
 - **CDN**: [aleatory.marcojorgensen.com](https://aleatory.marcojorgensen.com)
 - **Visualization Gallery**: [aleatory.marcojorgensen.com/examples/visualization_gallery.html](https://aleatory.marcojorgensen.com/examples/visualization_gallery.html)
 - **Author**: Marco Birkedahl Jørgensen
