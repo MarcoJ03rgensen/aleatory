@@ -22,6 +22,9 @@ import { readCSV, writeCSV, readJSON, writeJSON } from './data/io.js';
 import { pipe, chain } from './data/pipe.js';
 import { row_number, rank, lag, lead, cumsum, cummean, first, last } from './data/window.js';
 
+// R dataset compatibility
+import { readRDataset, writeRDataset, RDatasets, convertRType, detectRFormat } from './data/r_datasets.js';
+
 // Visualization module (optional - requires Plotly.js in browser)
 import * as vis from './vis/index.js';
 
@@ -51,6 +54,9 @@ export { DataFrame };
 export { pivotLonger, pivotWider, separate, unite, dropNA, fillNA };
 export { innerJoin, leftJoin, rightJoin, fullJoin, antiJoin, semiJoin, bindRows, bindCols };
 export { readCSV, writeCSV, readJSON, writeJSON };
+
+// R dataset compatibility
+export { readRDataset, writeRDataset, RDatasets, convertRType, detectRFormat };
 
 // Functional composition and chaining
 export { pipe, chain };
@@ -182,6 +188,12 @@ export default {
   writeCSV,
   readJSON,
   writeJSON,
+  // R dataset compatibility
+  readRDataset,
+  writeRDataset,
+  RDatasets,
+  convertRType,
+  detectRFormat,
   // Functional composition
   pipe,
   chain,
